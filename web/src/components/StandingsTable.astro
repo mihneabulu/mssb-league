@@ -4,8 +4,10 @@ import TeamInline from './TeamInline.astro';
 const teams = standingsTeams();
 const info = STAT_INFO.standings;
 const cols = [
-  { key: 'w', label: 'W' }, { key: 'l', label: 'L' }, { key: 'pct', label: 'Pct' },
-  { key: 'rf', label: 'RF' }, { key: 'ra', label: 'RA' }, { key: 'diff', label: 'Diff' },
+  { key: 'w', label: 'W' }, { key: 'l', label: 'L' },
+  { key: 'pct', label: 'Pct', hideSm: true },
+  { key: 'rf', label: 'RF', hideSm: true }, { key: 'ra', label: 'RA', hideSm: true },
+  { key: 'diff', label: 'Diff' },
 ];
 ---
 <div class="card" style="overflow:hidden">
@@ -15,7 +17,7 @@ const cols = [
         <th>#</th>
         <th>Team</th>
         {cols.map((c) => (
-          <th data-tip={info[c.key]} aria-label={`${c.label}: ${info[c.key]}`}><span class="lbl">{c.label}</span></th>
+          <th class={c.hideSm ? 'col-hide-sm' : undefined} data-tip={info[c.key]} aria-label={`${c.label}: ${info[c.key]}`}><span class="lbl">{c.label}</span></th>
         ))}
       </tr>
     </thead>
@@ -26,9 +28,9 @@ const cols = [
           <td><TeamInline name={t.name} /></td>
           <td class="mono-num"><strong>{t.record.w}</strong></td>
           <td class="mono-num muted">{t.record.l}</td>
-          <td class="mono-num">{pct3(t.record.pct)}</td>
-          <td class="mono-num muted">{t.record.rf}</td>
-          <td class="mono-num muted">{t.record.ra}</td>
+          <td class="mono-num col-hide-sm">{pct3(t.record.pct)}</td>
+          <td class="mono-num muted col-hide-sm">{t.record.rf}</td>
+          <td class="mono-num muted col-hide-sm">{t.record.ra}</td>
           <td class="mono-num" style={`font-weight:800;color:${t.record.diff > 0 ? '#2e8b1e' : t.record.diff < 0 ? '#c0392b' : 'var(--ink-soft)'}`}>
             {t.record.diff > 0 ? '+' : ''}{t.record.diff}
           </td>

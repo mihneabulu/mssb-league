@@ -39,19 +39,16 @@ const currentRound = rounds.filter((r) => r.matchups.some((m) => m.game)).at(-1)
             const hoW = g && g.winner === home;
             return (
               <div class="mu">
-                <div class={`mu-side ${g && !awW ? 'dim' : ''}`}><TeamInline name={away} size={26} bold={!!awW} /></div>
-                <div class="mu-mid">
-                  {g ? (
-                    <span class="scores mono-num">{g.awayScore}<span class="dash">–</span>{g.homeScore}</span>
-                  ) : (
-                    <span class="vs">@</span>
-                  )}
+                <div class={`mu-row ${g && !awW ? 'dim' : ''}`}>
+                  <TeamInline name={away} size={28} bold={!!awW} />
+                  {g ? <span class="mu-score mono-num">{g.awayScore}</span> : <span class="mu-tag muted">away</span>}
                 </div>
-                <div class={`mu-side right ${g && !hoW ? 'dim' : ''}`}><TeamInline name={home} size={26} bold={!!hoW} /></div>
+                <div class={`mu-row ${g && !hoW ? 'dim' : ''}`}>
+                  <TeamInline name={home} size={28} bold={!!hoW} />
+                  {g ? <span class="mu-score mono-num">{g.homeScore}</span> : <span class="mu-tag muted">home</span>}
+                </div>
                 <div class="mu-foot muted">
-                  {g
-                    ? stadiumName(g.stadiumId)
-                    : <><span class="up-dot">•</span> {homeStadium(home)}</>}
+                  {g ? stadiumName(g.stadiumId) : <><span class="up-dot">•</span> {homeStadium(home)}</>}
                 </div>
               </div>
             );
@@ -69,14 +66,11 @@ const currentRound = rounds.filter((r) => r.matchups.some((m) => m.game)).at(-1)
   .round-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
   .round-no { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; }
   .matchups { display: flex; flex-direction: column; gap: .55rem; }
-  .mu { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .4rem;
-        border: 2px solid #efe4d2; border-radius: 12px; padding: .5rem .6rem; }
-  .mu-side { min-width: 0; }
-  .mu-side.right { display: flex; justify-content: flex-end; text-align: right; }
-  .mu-side.dim { opacity: .6; }
-  .mu-mid { text-align: center; }
-  .scores { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
-  .scores .dash { color: var(--ink-soft); margin: 0 .15rem; }
-  .vs { color: var(--ink-soft); font-weight: 700; }
-  .mu-foot { grid-column: 1 / -1; text-align: center; font-size: .72rem; }
+  .mu { display: flex; flex-direction: column; gap: .35rem;
+        border: 2px solid #efe4d2; border-radius: 12px; padding: .55rem .7rem; }
+  .mu-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; }
+  .mu-row.dim { opacity: .58; }
+  .mu-score { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; flex: none; }
+  .mu-tag { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; flex: none; }
+  .mu-foot { text-align: center; font-size: .72rem; border-top: 2px solid #efe4d2; padding-top: .35rem; margin-top: .05rem; }
 </style>

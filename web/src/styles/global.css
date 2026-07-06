@@ -140,3 +140,25 @@ th[data-tip] .lbl { text-decoration: underline dotted var(--ink-soft); text-unde
 #tip.below { transform: translateY(-3px); }
 #tip.below.on { transform: translateY(0); }
 @media (hover: none) { th[data-tip] { cursor: default; } }
+
+/* horizontal scroll for wide tables on small screens */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* keep the player/name column pinned while scrolling wide stat tables */
+table.grid.sortable th:first-child,
+table.grid.sortable td:first-child {
+  position: sticky; left: 0; z-index: 2;
+  background: var(--card); box-shadow: 2px 0 0 #efe4d2;
+}
+table.grid.sortable thead th:first-child { z-index: 3; }
+
+@media (max-width: 560px) {
+  .wrap { padding-left: .8rem; padding-right: .8rem; }
+  .col-hide-sm { display: none !important; }
+  .topbar-inner { padding: .55rem .8rem; gap: .5rem; }
+  .brand { font-size: 1.05rem; }
+  .nav { gap: .25rem; width: 100%; }
+  .nav a { padding: .3rem .6rem; font-size: .9rem; }
+  .section-head { margin: 1.5rem 0 .8rem; }
+  .section-head .pill { font-size: 1.05rem; }
+}

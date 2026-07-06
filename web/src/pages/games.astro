@@ -45,6 +45,7 @@ function battingLine(p: BoxPlayer) {
             return (
               <div class="box">
                 <div class="box-title" style={`border-color:${t.color}`}>{s.name}</div>
+                <div class="scroll-x">
                 <table class="grid mini-box">
                   <thead><tr><th>Batter</th>{boxCols.map((c) => (
                     <th data-tip={bi[c.key]} aria-label={`${c.label}: ${bi[c.key]}`}><span class="lbl">{c.label}</span></th>
@@ -68,6 +69,7 @@ function battingLine(p: BoxPlayer) {
                     })}
                   </tbody>
                 </table>
+                </div>
                 {pitchers.map((p) => (
                   <div class="pline muted">
                     <strong style="color:var(--ink)">{p.name}</strong> — {p.pitching.ip} IP, {p.pitching.h} H,
