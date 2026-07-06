@@ -1,0 +1,90 @@
+---
+import { team, portrait, withUrl, STAT_INFO } from '../lib/data';
+export type Col = { key: string; label: string; fmt?: 'int' | 'dp3' | 'dp2'; sort?: 'asc' | 'desc' };
+export type Row = { charId: number; name: string; team: string; values: Record<string, number> };
+const { columns, rows, sortKey, sortDir = 'desc', caption, kind = 'batting' } = Astro.props as {
+  columns: Col[]; rows: Row[]; sortKey?: string; sortDir?: 'asc' | 'desc'; caption?: string;
+  kind?: 'batting' | 'pitching';
+};
+const info = STAT_INFO[kind];
+const fmt = (v: number, f?: string) =>
+  f === 'dp3' ? (v === 1 ? '1.000' : v.toFixed(3).replace(/^0/, ''))
+  : f === 'dp2' ? v.toFixed(2)
+  : String(v);
+const initialKey = sortKey ?? columns[0]?.key;
+---
+<div class="card" style="overflow-x:auto">
+  {caption && <div class="cap display">{caption}</div>}
+  <table class="grid sortable" data-sortkey={initialKey} data-sortdir={sortDir}>
+    <thead>
+      <tr>
+        <th class="sortable" data-key="__name" data-type="text">Player</th>
+        {columns.map((c) => (
+          <th class="sortable" data-key={c.key} data-type="num" data-default={c.sort ?? sortDir}
+              data-dir={c.key === initialKey ? sortDir : undefined}
+              data-tip={info[c.key]}
+              aria-label={info[c.key] ? `${c.label}: ${info[c.key]}` : c.label}>
+            <span class="lbl">{c.label}</span></th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => {
+        const t = team(r.team);
+        return (
+          <tr data-name={r.name}>
+            <td>
+              <a href={withUrl(`teams/${t.slug}`)} class="player">
+                <img class="pf" src={withUrl(portrait(r.charId))} alt="" width={28} height={28} loading="lazy" />
+                <span class="chip" style={`background:${t.color}`}></span>
+                <span class="pname">{r.name}</span>
+              </a>
+            </td>
+            {columns.map((c) => (
+              <td class="mono-num" data-key={c.key} data-sort={r.values[c.key]}>{fmt(r.values[c.key], c.fmt)}</td>
+            ))}
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .cap { padding: .7rem 1rem .2rem; font-weight: 600; font-size: 1.05rem; }
+  .player { display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; color: inherit; font-weight: 700; }
+  .player:hover .pname { text-decoration: underline; }
+  .grid td:first-child, .grid th:first-child { padding-left: 1rem; }
+  .grid td:last-child, .grid th:last-child { padding-right: 1rem; }
+</style>
+
+<script>
+  const norm = (v: string | null, type: string | undefined) =>
+    type === 'num' ? parseFloat(v ?? '0') || 0 : (v ?? '').toLowerCase();
+  document.querySelectorAll<HTMLTableElement>('table.sortable').forEach((table) => {
+    const tbody = table.tBodies[0];
+    const ths = Array.from(table.tHead!.rows[0].cells);
+    ths.forEach((th) => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key!;
+        const type = th.dataset.type;
+        const cur = th.getAttribute('data-dir');
+        const dir = cur === 'desc' ? 'asc' : cur === 'asc' ? 'desc' : (th.dataset.default ?? 'desc');
+        ths.forEach((o) => o.removeAttribute('data-dir'));
+        th.setAttribute('data-dir', dir);
+        const rows = Array.from(tbody.rows);
+        rows.sort((a, b) => {
+          const av = key === '__name'
+            ? norm(a.dataset.name ?? '', 'text')
+            : norm(a.querySelector(`td[data-key="${key}"]`)!.getAttribute('data-sort'), type);
+          const bv = key === '__name'
+            ? norm(b.dataset.name ?? '', 'text')
+            : norm(b.querySelector(`td[data-key="${key}"]`)!.getAttribute('data-sort'), type);
+          const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach((r) => tbody.appendChild(r));
+      });
+    });
+  });
+</script>

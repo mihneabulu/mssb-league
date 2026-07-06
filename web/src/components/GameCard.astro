@@ -1,0 +1,36 @@
+---
+import type { Game } from '../lib/data';
+import { team, stadiumName, withUrl } from '../lib/data';
+import TeamInline from './TeamInline.astro';
+const { game } = Astro.props as { game: Game };
+const rows = [
+  { name: game.away, score: game.awayScore },
+  { name: game.home, score: game.homeScore },
+];
+const win = game.winner;
+---
+<div class="card gcard">
+  <div class="gcard-top">
+    {rows.map((r) => (
+      <div class="team-row" style={win === r.name ? '' : 'opacity:.72'}>
+        <TeamInline name={r.name} size={30} bold={win === r.name} />
+        <span class="score mono-num">{r.score}{win === r.name && <span class="w">◀</span>}</span>
+      </div>
+    ))}
+  </div>
+  <div class="gcard-foot muted">
+    <span><i>⚾</i> {stadiumName(game.stadiumId)}</span>
+    <a href={withUrl(`games#${game.gameId}`)} class="boxlink">Box score →</a>
+  </div>
+</div>
+
+<style>
+  .gcard { padding: .85rem .95rem; display: flex; flex-direction: column; gap: .6rem; }
+  .gcard-top { display: flex; flex-direction: column; gap: .55rem; }
+  .team-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+  .score { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; display: flex; align-items: center; gap: .35rem; }
+  .score .w { color: var(--grass); font-size: .8rem; }
+  .gcard-foot { display: flex; justify-content: space-between; align-items: center; font-size: .78rem; border-top: 2px solid #efe4d2; padding-top: .5rem; }
+  .boxlink { text-decoration: none; font-weight: 700; }
+  .boxlink:hover { text-decoration: underline; }
+</style>

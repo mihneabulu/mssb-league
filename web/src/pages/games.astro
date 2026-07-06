@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+import TeamInline from '../components/TeamInline.astro';
+import { data, team, portrait, withUrl, stadiumName, STAT_INFO } from '../lib/data';
+import type { BoxPlayer } from '../lib/data';
+
+const games = [...data.games].sort((a, b) => b.date - a.date);
+const bi = STAT_INFO.batting;
+const boxCols = [
+  { key: 'ab', label: 'AB' }, { key: 'h', label: 'H' }, { key: 'hr', label: 'HR' },
+  { key: 'rbi', label: 'RBI' }, { key: 'bb', label: 'BB' }, { key: 'so', label: 'K' },
+];
+
+function battingLine(p: BoxPlayer) {
+  const b = p.batting;
+  return { ab: b.ab, h: b.h, hr: b.hr, rbi: b.rbi, bb: b.bb, so: b.so };
+}
+---
+<Base title="Box scores" active="schedule">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">📊 Box scores</span></div>
+
+  {games.map((g) => {
+    const sides = [
+      { label: 'Away', name: g.away, score: g.awayScore, players: g.boxscore.away },
+      { label: 'Home', name: g.home, score: g.homeScore, players: g.boxscore.home },
+    ];
+    return (
+      <section id={g.gameId} class="card game">
+        <header class="game-head">
+          <div class="gh-teams">
+            {sides.map((s) => (
+              <div class={`gh-team ${g.winner === s.name ? '' : 'dim'}`}>
+                <TeamInline name={s.name} size={30} bold={g.winner === s.name} />
+                <span class="gh-score">{s.score}</span>
+              </div>
+            ))}
+          </div>
+          <div class="gh-meta muted">Week {g.week} · {stadiumName(g.stadiumId)} · {g.innings} inn</div>
+        </header>
+
+        <div class="boxes">
+          {sides.map((s) => {
+            const t = team(s.name);
+            const pitchers = s.players.filter((p) => p.pitching.wasPitcher > 0);
+            return (
+              <div class="box">
+                <div class="box-title" style={`border-color:${t.color}`}>{s.name}</div>
+                <table class="grid mini-box">
+                  <thead><tr><th>Batter</th>{boxCols.map((c) => (
+                    <th data-tip={bi[c.key]} aria-label={`${c.label}: ${bi[c.key]}`}><span class="lbl">{c.label}</span></th>
+                  ))}</tr></thead>
+                  <tbody>
+                    {s.players.map((p) => {
+                      const l = battingLine(p);
+                      return (
+                        <tr>
+                          <td>
+                            <span class="bp">
+                              <img class="pf" src={withUrl(portrait(p.charId))} alt="" width={22} height={22} />
+                              {p.name}{p.captain && <span class="cdot">C</span>}
+                            </span>
+                          </td>
+                          <td class="mono-num">{l.ab}</td><td class="mono-num">{l.h}</td>
+                          <td class="mono-num">{l.hr}</td><td class="mono-num">{l.rbi}</td>
+                          <td class="mono-num">{l.bb}</td><td class="mono-num">{l.so}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {pitchers.map((p) => (
+                  <div class="pline muted">
+                    <strong style="color:var(--ink)">{p.name}</strong> — {p.pitching.ip} IP, {p.pitching.h} H,
+                    {' '}{p.pitching.er} ER, {p.pitching.bb} BB, {p.pitching.so} K
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  })}
+</Base>
+
+<style>
+  .game { padding: 1rem 1.1rem 1.2rem; margin-bottom: 1.3rem; scroll-margin-top: 80px; }
+  .game-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: .8rem; padding-bottom: .7rem; border-bottom: 3px solid var(--line); }
+  .gh-teams { display: flex; gap: 1.6rem; flex-wrap: wrap; }
+  .gh-team { display: flex; align-items: center; gap: .6rem; }
+  .gh-team.dim { opacity: .62; }
+  .gh-score { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; }
+  .gh-meta { font-size: .78rem; text-align: right; }
+  .boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+  .box-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; border-bottom: 4px solid; display: inline-block; margin-bottom: .3rem; padding-bottom: .1rem; }
+  .mini-box th, .mini-box td { padding: .3rem .35rem; font-size: .85rem; }
+  .bp { display: inline-flex; align-items: center; gap: .35rem; font-weight: 600; }
+  .cdot { font-size: .62rem; font-weight: 800; background: var(--gold); border: 1.5px solid var(--ink); border-radius: 4px; padding: 0 .2rem; margin-left: .15rem; }
+  .pline { font-size: .8rem; margin-top: .3rem; }
+</style>

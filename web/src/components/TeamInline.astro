@@ -1,0 +1,20 @@
+---
+import { team, withUrl } from '../lib/data';
+const { name, size = 26, bold = false, link = true } = Astro.props as {
+  name: string; size?: number; bold?: boolean; link?: boolean;
+};
+const t = team(name);
+const Tag = link ? 'a' : 'span';
+const href = link ? withUrl(`teams/${t.slug}`) : undefined;
+---
+<Tag href={href} class="ti" style={`font-weight:${bold ? 800 : 600}`}>
+  <img class="pf" src={withUrl(t.captainPortrait)} alt="" width={size} height={size} loading="lazy" />
+  <span class="chip" style={`background:${t.color}`}></span>
+  <span class="ti-name">{name}</span>
+</Tag>
+
+<style>
+  .ti { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; text-decoration: none; color: inherit; }
+  a.ti:hover .ti-name { text-decoration: underline; }
+  .ti-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>

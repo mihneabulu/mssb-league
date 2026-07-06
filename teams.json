@@ -1,0 +1,693 @@
+{
+  "season": {
+    "name": "Mario Superstar Baseball League 2026 \u2014 Season 1",
+    "startDate": "2026-06-29",
+    "rounds": 10
+  },
+  "characters": {
+    "0": "Mario",
+    "1": "Luigi",
+    "2": "DK",
+    "3": "Diddy",
+    "4": "Peach",
+    "5": "Daisy",
+    "6": "Yoshi",
+    "7": "Baby Mario",
+    "8": "Baby Luigi",
+    "9": "Bowser",
+    "10": "Wario",
+    "11": "Waluigi",
+    "12": "Koopa(G)",
+    "13": "Toad(R)",
+    "14": "Boo",
+    "15": "Toadette",
+    "16": "Shy Guy(R)",
+    "17": "Birdo",
+    "18": "Monty",
+    "19": "Bowser Jr",
+    "20": "Paratroopa(R)",
+    "21": "Pianta(B)",
+    "22": "Pianta(R)",
+    "23": "Pianta(Y)",
+    "24": "Noki(B)",
+    "25": "Noki(R)",
+    "26": "Noki(G)",
+    "27": "Bro(H)",
+    "28": "Toadsworth",
+    "29": "Toad(B)",
+    "30": "Toad(Y)",
+    "31": "Toad(G)",
+    "32": "Toad(P)",
+    "33": "Magikoopa(B)",
+    "34": "Magikoopa(R)",
+    "35": "Magikoopa(G)",
+    "36": "Magikoopa(Y)",
+    "37": "King Boo",
+    "38": "Petey",
+    "39": "Dixie",
+    "40": "Goomba",
+    "41": "Paragoomba",
+    "42": "Koopa(R)",
+    "43": "Paratroopa(G)",
+    "44": "Shy Guy(B)",
+    "45": "Shy Guy(Y)",
+    "46": "Shy Guy(G)",
+    "47": "Shy Guy(Bk)",
+    "48": "Dry Bones(Gy)",
+    "49": "Dry Bones(G)",
+    "50": "Dry Bones(R)",
+    "51": "Dry Bones(B)",
+    "52": "Bro(F)",
+    "53": "Bro(B)"
+  },
+  "teams": [
+    {
+      "name": "Omnipotent Oz",
+      "slug": "omnipotent-oz",
+      "captainCharId": 9,
+      "roster": [
+        {
+          "charId": 9,
+          "name": "Bowser",
+          "captain": true,
+          "portrait": "portraits/9.png"
+        },
+        {
+          "charId": 19,
+          "name": "Bowser Jr",
+          "captain": false,
+          "portrait": "portraits/19.png"
+        },
+        {
+          "charId": 26,
+          "name": "Noki(G)",
+          "captain": false,
+          "portrait": "portraits/26.png"
+        },
+        {
+          "charId": 27,
+          "name": "Bro(H)",
+          "captain": false,
+          "portrait": "portraits/27.png"
+        },
+        {
+          "charId": 42,
+          "name": "Koopa(R)",
+          "captain": false,
+          "portrait": "portraits/42.png"
+        },
+        {
+          "charId": 43,
+          "name": "Paratroopa(G)",
+          "captain": false,
+          "portrait": "portraits/43.png"
+        },
+        {
+          "charId": 50,
+          "name": "Dry Bones(R)",
+          "captain": false,
+          "portrait": "portraits/50.png"
+        },
+        {
+          "charId": 51,
+          "name": "Dry Bones(B)",
+          "captain": false,
+          "portrait": "portraits/51.png"
+        },
+        {
+          "charId": 53,
+          "name": "Bro(B)",
+          "captain": false,
+          "portrait": "portraits/53.png"
+        }
+      ],
+      "color": "#E24B4A",
+      "captainPortrait": "portraits/9.png",
+      "stadium": "Yoshi Park"
+    },
+    {
+      "name": "Tickleball Predator",
+      "slug": "tickleball-predator",
+      "captainCharId": 38,
+      "roster": [
+        {
+          "charId": 17,
+          "name": "Birdo",
+          "captain": false,
+          "portrait": "portraits/17.png"
+        },
+        {
+          "charId": 28,
+          "name": "Toadsworth",
+          "captain": false,
+          "portrait": "portraits/28.png"
+        },
+        {
+          "charId": 30,
+          "name": "Toad(Y)",
+          "captain": false,
+          "portrait": "portraits/30.png"
+        },
+        {
+          "charId": 31,
+          "name": "Toad(G)",
+          "captain": false,
+          "portrait": "portraits/31.png"
+        },
+        {
+          "charId": 36,
+          "name": "Magikoopa(Y)",
+          "captain": false,
+          "portrait": "portraits/36.png"
+        },
+        {
+          "charId": 38,
+          "name": "Petey",
+          "captain": true,
+          "portrait": "portraits/38.png"
+        },
+        {
+          "charId": 39,
+          "name": "Dixie",
+          "captain": false,
+          "portrait": "portraits/39.png"
+        },
+        {
+          "charId": 45,
+          "name": "Shy Guy(Y)",
+          "captain": false,
+          "portrait": "portraits/45.png"
+        },
+        {
+          "charId": 46,
+          "name": "Shy Guy(G)",
+          "captain": false,
+          "portrait": "portraits/46.png"
+        }
+      ],
+      "color": "#1D9E75",
+      "captainPortrait": "portraits/38.png",
+      "stadium": "Mario Stadium"
+    },
+    {
+      "name": "Flame Imp",
+      "slug": "flame-imp",
+      "captainCharId": 2,
+      "roster": [
+        {
+          "charId": 2,
+          "name": "DK",
+          "captain": true,
+          "portrait": "portraits/2.png"
+        },
+        {
+          "charId": 3,
+          "name": "Diddy",
+          "captain": false,
+          "portrait": "portraits/3.png"
+        },
+        {
+          "charId": 12,
+          "name": "Koopa(G)",
+          "captain": false,
+          "portrait": "portraits/12.png"
+        },
+        {
+          "charId": 23,
+          "name": "Pianta(Y)",
+          "captain": false,
+          "portrait": "portraits/23.png"
+        },
+        {
+          "charId": 24,
+          "name": "Noki(B)",
+          "captain": false,
+          "portrait": "portraits/24.png"
+        },
+        {
+          "charId": 35,
+          "name": "Magikoopa(G)",
+          "captain": false,
+          "portrait": "portraits/35.png"
+        },
+        {
+          "charId": 48,
+          "name": "Dry Bones(Gy)",
+          "captain": false,
+          "portrait": "portraits/48.png"
+        },
+        {
+          "charId": 49,
+          "name": "Dry Bones(G)",
+          "captain": false,
+          "portrait": "portraits/49.png"
+        },
+        {
+          "charId": 52,
+          "name": "Bro(F)",
+          "captain": false,
+          "portrait": "portraits/52.png"
+        }
+      ],
+      "color": "#EF9F27",
+      "captainPortrait": "portraits/2.png",
+      "stadium": "DK Jungle"
+    },
+    {
+      "name": "Booty Barn",
+      "slug": "booty-barn",
+      "captainCharId": 14,
+      "roster": [
+        {
+          "charId": 1,
+          "name": "Luigi",
+          "captain": false,
+          "portrait": "portraits/1.png"
+        },
+        {
+          "charId": 4,
+          "name": "Peach",
+          "captain": false,
+          "portrait": "portraits/4.png"
+        },
+        {
+          "charId": 14,
+          "name": "Boo",
+          "captain": true,
+          "portrait": "portraits/14.png"
+        },
+        {
+          "charId": 15,
+          "name": "Toadette",
+          "captain": false,
+          "portrait": "portraits/15.png"
+        },
+        {
+          "charId": 18,
+          "name": "Monty",
+          "captain": false,
+          "portrait": "portraits/18.png"
+        },
+        {
+          "charId": 29,
+          "name": "Toad(B)",
+          "captain": false,
+          "portrait": "portraits/29.png"
+        },
+        {
+          "charId": 32,
+          "name": "Toad(P)",
+          "captain": false,
+          "portrait": "portraits/32.png"
+        },
+        {
+          "charId": 44,
+          "name": "Shy Guy(B)",
+          "captain": false,
+          "portrait": "portraits/44.png"
+        },
+        {
+          "charId": 47,
+          "name": "Shy Guy(Bk)",
+          "captain": false,
+          "portrait": "portraits/47.png"
+        }
+      ],
+      "color": "#378ADD",
+      "captainPortrait": "portraits/14.png",
+      "stadium": "Peach Garden"
+    },
+    {
+      "name": "Big Papa",
+      "slug": "big-papa",
+      "captainCharId": 11,
+      "roster": [
+        {
+          "charId": 10,
+          "name": "Wario",
+          "captain": false,
+          "portrait": "portraits/10.png"
+        },
+        {
+          "charId": 11,
+          "name": "Waluigi",
+          "captain": true,
+          "portrait": "portraits/11.png"
+        },
+        {
+          "charId": 16,
+          "name": "Shy Guy(R)",
+          "captain": false,
+          "portrait": "portraits/16.png"
+        },
+        {
+          "charId": 20,
+          "name": "Paratroopa(R)",
+          "captain": false,
+          "portrait": "portraits/20.png"
+        },
+        {
+          "charId": 21,
+          "name": "Pianta(B)",
+          "captain": false,
+          "portrait": "portraits/21.png"
+        },
+        {
+          "charId": 25,
+          "name": "Noki(R)",
+          "captain": false,
+          "portrait": "portraits/25.png"
+        },
+        {
+          "charId": 34,
+          "name": "Magikoopa(R)",
+          "captain": false,
+          "portrait": "portraits/34.png"
+        },
+        {
+          "charId": 37,
+          "name": "King Boo",
+          "captain": false,
+          "portrait": "portraits/37.png"
+        },
+        {
+          "charId": 41,
+          "name": "Paragoomba",
+          "captain": false,
+          "portrait": "portraits/41.png"
+        }
+      ],
+      "color": "#7F77DD",
+      "captainPortrait": "portraits/11.png",
+      "stadium": "Wario Palace"
+    },
+    {
+      "name": "Lego Meek",
+      "slug": "lego-meek",
+      "captainCharId": 6,
+      "roster": [
+        {
+          "charId": 0,
+          "name": "Mario",
+          "captain": false,
+          "portrait": "portraits/0.png"
+        },
+        {
+          "charId": 5,
+          "name": "Daisy",
+          "captain": false,
+          "portrait": "portraits/5.png"
+        },
+        {
+          "charId": 6,
+          "name": "Yoshi",
+          "captain": true,
+          "portrait": "portraits/6.png"
+        },
+        {
+          "charId": 7,
+          "name": "Baby Mario",
+          "captain": false,
+          "portrait": "portraits/7.png"
+        },
+        {
+          "charId": 8,
+          "name": "Baby Luigi",
+          "captain": false,
+          "portrait": "portraits/8.png"
+        },
+        {
+          "charId": 13,
+          "name": "Toad(R)",
+          "captain": false,
+          "portrait": "portraits/13.png"
+        },
+        {
+          "charId": 22,
+          "name": "Pianta(R)",
+          "captain": false,
+          "portrait": "portraits/22.png"
+        },
+        {
+          "charId": 33,
+          "name": "Magikoopa(B)",
+          "captain": false,
+          "portrait": "portraits/33.png"
+        },
+        {
+          "charId": 40,
+          "name": "Goomba",
+          "captain": false,
+          "portrait": "portraits/40.png"
+        }
+      ],
+      "color": "#639922",
+      "captainPortrait": "portraits/6.png",
+      "stadium": "Bowser Castle"
+    }
+  ],
+  "characterPortraits": {
+    "0": "portraits/0.png",
+    "1": "portraits/1.png",
+    "2": "portraits/2.png",
+    "3": "portraits/3.png",
+    "4": "portraits/4.png",
+    "5": "portraits/5.png",
+    "6": "portraits/6.png",
+    "7": "portraits/7.png",
+    "8": "portraits/8.png",
+    "9": "portraits/9.png",
+    "10": "portraits/10.png",
+    "11": "portraits/11.png",
+    "12": "portraits/12.png",
+    "13": "portraits/13.png",
+    "14": "portraits/14.png",
+    "15": "portraits/15.png",
+    "16": "portraits/16.png",
+    "17": "portraits/17.png",
+    "18": "portraits/18.png",
+    "19": "portraits/19.png",
+    "20": "portraits/20.png",
+    "21": "portraits/21.png",
+    "22": "portraits/22.png",
+    "23": "portraits/23.png",
+    "24": "portraits/24.png",
+    "25": "portraits/25.png",
+    "26": "portraits/26.png",
+    "27": "portraits/27.png",
+    "28": "portraits/28.png",
+    "29": "portraits/29.png",
+    "30": "portraits/30.png",
+    "31": "portraits/31.png",
+    "32": "portraits/32.png",
+    "33": "portraits/33.png",
+    "34": "portraits/34.png",
+    "35": "portraits/35.png",
+    "36": "portraits/36.png",
+    "37": "portraits/37.png",
+    "38": "portraits/38.png",
+    "39": "portraits/39.png",
+    "40": "portraits/40.png",
+    "41": "portraits/41.png",
+    "42": "portraits/42.png",
+    "43": "portraits/43.png",
+    "44": "portraits/44.png",
+    "45": "portraits/45.png",
+    "46": "portraits/46.png",
+    "47": "portraits/47.png",
+    "48": "portraits/48.png",
+    "49": "portraits/49.png",
+    "50": "portraits/50.png",
+    "51": "portraits/51.png",
+    "52": "portraits/52.png",
+    "53": "portraits/53.png"
+  },
+  "schedule": [
+    {
+      "round": 1,
+      "matchups": [
+        [
+          "Booty Barn",
+          "Flame Imp"
+        ],
+        [
+          "Lego Meek",
+          "Omnipotent Oz"
+        ],
+        [
+          "Big Papa",
+          "Tickleball Predator"
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "matchups": [
+        [
+          "Booty Barn",
+          "Lego Meek"
+        ],
+        [
+          "Big Papa",
+          "Omnipotent Oz"
+        ],
+        [
+          "Flame Imp",
+          "Tickleball Predator"
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "matchups": [
+        [
+          "Big Papa",
+          "Flame Imp"
+        ],
+        [
+          "Lego Meek",
+          "Tickleball Predator"
+        ],
+        [
+          "Booty Barn",
+          "Omnipotent Oz"
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "matchups": [
+        [
+          "Flame Imp",
+          "Omnipotent Oz"
+        ],
+        [
+          "Booty Barn",
+          "Tickleball Predator"
+        ],
+        [
+          "Big Papa",
+          "Lego Meek"
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "matchups": [
+        [
+          "Omnipotent Oz",
+          "Tickleball Predator"
+        ],
+        [
+          "Big Papa",
+          "Booty Barn"
+        ],
+        [
+          "Flame Imp",
+          "Lego Meek"
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "matchups": [
+        [
+          "Flame Imp",
+          "Booty Barn"
+        ],
+        [
+          "Omnipotent Oz",
+          "Lego Meek"
+        ],
+        [
+          "Tickleball Predator",
+          "Big Papa"
+        ]
+      ]
+    },
+    {
+      "round": 7,
+      "matchups": [
+        [
+          "Lego Meek",
+          "Booty Barn"
+        ],
+        [
+          "Omnipotent Oz",
+          "Big Papa"
+        ],
+        [
+          "Tickleball Predator",
+          "Flame Imp"
+        ]
+      ]
+    },
+    {
+      "round": 8,
+      "matchups": [
+        [
+          "Flame Imp",
+          "Big Papa"
+        ],
+        [
+          "Tickleball Predator",
+          "Lego Meek"
+        ],
+        [
+          "Omnipotent Oz",
+          "Booty Barn"
+        ]
+      ]
+    },
+    {
+      "round": 9,
+      "matchups": [
+        [
+          "Omnipotent Oz",
+          "Flame Imp"
+        ],
+        [
+          "Tickleball Predator",
+          "Booty Barn"
+        ],
+        [
+          "Lego Meek",
+          "Big Papa"
+        ]
+      ]
+    },
+    {
+      "round": 10,
+      "matchups": [
+        [
+          "Tickleball Predator",
+          "Omnipotent Oz"
+        ],
+        [
+          "Booty Barn",
+          "Big Papa"
+        ],
+        [
+          "Lego Meek",
+          "Flame Imp"
+        ]
+      ]
+    }
+  ],
+  "stadiums": {
+    "note": "StadiumID->name is learned by build.py from played games (each game is at the home team's stadium). Confirmed so far below.",
+    "names": [
+      "Mario Stadium",
+      "Peach Garden",
+      "Wario Palace",
+      "Yoshi Park",
+      "DK Jungle",
+      "Bowser Castle"
+    ],
+    "byId": {
+      "0": "Mario Stadium",
+      "3": "Yoshi Park",
+      "5": "DK Jungle"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import StandingsTable from '../components/StandingsTable.astro';
+import GameCard from '../components/GameCard.astro';
+import { data } from '../lib/data';
+
+const weeksPlayed = [...new Set(data.games.map((g) => g.week ?? 0))].sort((a, b) => a - b);
+const latestWeek = weeksPlayed.length ? weeksPlayed[weeksPlayed.length - 1] : null;
+const recent = data.games.filter((g) => (g.week ?? 0) === latestWeek).sort((a, b) => a.date - b.date);
+---
+<Base title="Standings" active="home">
+  <section class="hero card">
+    <div class="hero-text">
+      <p class="kicker">Season 1 · 2026</p>
+      <h1>Mario Superstar Baseball League</h1>
+      <p class="muted sub">{data.teams.length} teams · {data.season.rounds}-round double round-robin</p>
+    </div>
+    <div class="hero-week">
+      <span class="wlabel">Now playing</span>
+      <span class="wnum">Week {latestWeek ?? 1}</span>
+      <span class="wof">of {data.season.rounds}</span>
+    </div>
+  </section>
+
+  <div class="section-head"><span class="pill">🏆 Standings</span></div>
+  <StandingsTable />
+
+  <div class="section-head"><span class="pill">📅 Week {latestWeek ?? 1} results</span></div>
+  <div class="results-grid">
+    {recent.map((g) => <GameCard game={g} />)}
+    {recent.length === 0 && <p class="muted">No games recorded yet.</p>}
+  </div>
+</Base>
+
+<style>
+  .hero {
+    margin-top: 1.4rem; padding: 1.5rem 1.6rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    background: linear-gradient(180deg, #fff 60%, #fff6e6);
+  }
+  .kicker { font-family: var(--font-display); font-weight: 600; color: var(--dirt); margin: 0 0 .2rem; text-transform: uppercase; letter-spacing: 1px; font-size: .8rem; }
+  .sub { margin: .4rem 0 0; }
+  .hero-week {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--ink); color: #fff; border-radius: 14px; padding: .7rem 1.3rem; border: 3px solid var(--gold);
+  }
+  .hero-week .wlabel { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; opacity: .8; }
+  .hero-week .wnum { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; line-height: 1; color: var(--gold); }
+  .hero-week .wof { font-size: .8rem; opacity: .8; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+</style>

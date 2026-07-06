@@ -1,0 +1,21 @@
+# Secrets — the league Excel contains a live Google API key; never commit it
+*.xlsx
+
+# Node / Astro
+web/node_modules/
+web/dist/
+web/.astro/
+node_modules/
+
+# Python / uv
+__pycache__/
+.venv/
+*.pyc
+
+# OS / editor
+.DS_Store
+*.swp
+
+# Scratch
+scratchpad/
+assets/*_verify.png

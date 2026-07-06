@@ -1,0 +1,45 @@
+---
+import { standingsTeams, pct3, STAT_INFO } from '../lib/data';
+import TeamInline from './TeamInline.astro';
+const teams = standingsTeams();
+const info = STAT_INFO.standings;
+const cols = [
+  { key: 'w', label: 'W' }, { key: 'l', label: 'L' }, { key: 'pct', label: 'Pct' },
+  { key: 'rf', label: 'RF' }, { key: 'ra', label: 'RA' }, { key: 'diff', label: 'Diff' },
+];
+---
+<div class="card" style="overflow:hidden">
+  <table class="grid standings">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Team</th>
+        {cols.map((c) => (
+          <th data-tip={info[c.key]} aria-label={`${c.label}: ${info[c.key]}`}><span class="lbl">{c.label}</span></th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {teams.map((t, i) => (
+        <tr>
+          <td><span class={`rank-badge ${i === 0 ? 'rank-1' : ''}`}>{i + 1}</span></td>
+          <td><TeamInline name={t.name} /></td>
+          <td class="mono-num"><strong>{t.record.w}</strong></td>
+          <td class="mono-num muted">{t.record.l}</td>
+          <td class="mono-num">{pct3(t.record.pct)}</td>
+          <td class="mono-num muted">{t.record.rf}</td>
+          <td class="mono-num muted">{t.record.ra}</td>
+          <td class="mono-num" style={`font-weight:800;color:${t.record.diff > 0 ? '#2e8b1e' : t.record.diff < 0 ? '#c0392b' : 'var(--ink-soft)'}`}>
+            {t.record.diff > 0 ? '+' : ''}{t.record.diff}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<style>
+  .standings td { padding-top: .7rem; padding-bottom: .7rem; }
+  .standings td:first-child, .standings th:first-child { padding-left: 1rem; }
+  .standings td:last-child, .standings th:last-child { padding-right: 1rem; }
+  .standings th:nth-child(2), .standings td:nth-child(2) { text-align: left; }
+</style>

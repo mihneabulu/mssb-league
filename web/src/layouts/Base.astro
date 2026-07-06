@@ -1,0 +1,85 @@
+---
+import '../styles/global.css';
+import { data, withUrl } from '../lib/data';
+const { title, active } = Astro.props as { title?: string; active?: string };
+const nav = [
+  { href: '', label: 'Standings', key: 'home' },
+  { href: 'schedule', label: 'Schedule', key: 'schedule' },
+  { href: 'teams', label: 'Teams', key: 'teams' },
+  { href: 'leaders', label: 'Leaders', key: 'leaders' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} · ` : ''}{data.season.name}</title>
+    <meta name="description" content={data.season.name} />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='white' stroke='%23e2402f' stroke-width='8'/></svg>" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href={withUrl('')}>
+          <span class="ball">⚾</span>
+          <span>MSB League</span>
+        </a>
+        <nav class="nav">
+          {nav.map((n) => (
+            <a href={withUrl(n.href)} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <div id="tip" role="tooltip" aria-hidden="true"></div>
+    <footer class="wrap" style="padding-top:0">
+      <p class="muted" style="font-size:.8rem; border-top:2px solid #efe4d2; padding-top:1rem">
+        {data.season.name} · generated {new Date(data.generatedAt).toLocaleDateString()} · stats via Project Rio
+      </p>
+    </footer>
+    <script>
+      const tip = document.getElementById('tip')!;
+      let active: HTMLElement | null = null;
+      function show(el: HTMLElement) {
+        const text = el.getAttribute('data-tip');
+        if (!text) return;
+        active = el;
+        tip.textContent = text;
+        tip.classList.add('on');
+        tip.setAttribute('aria-hidden', 'false');
+        const r = el.getBoundingClientRect();
+        const tw = tip.offsetWidth, th = tip.offsetHeight;
+        let left = r.left + r.width / 2 - tw / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+        let top = r.top - th - 10;
+        tip.classList.toggle('below', top < 8);
+        if (top < 8) top = r.bottom + 10;
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+      }
+      function hide() {
+        active = null;
+        tip.classList.remove('on');
+        tip.setAttribute('aria-hidden', 'true');
+      }
+      document.addEventListener('pointerover', (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
+        if (el && el !== active) show(el);
+      });
+      document.addEventListener('pointerout', (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
+        if (el && el === active) hide();
+      });
+      document.addEventListener('focusin', (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
+        if (el) show(el);
+      });
+      document.addEventListener('focusout', hide);
+      window.addEventListener('scroll', hide, true);
+    </script>
+  </body>
+</html>

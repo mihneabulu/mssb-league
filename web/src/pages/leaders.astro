@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import StatTable from '../components/StatTable.astro';
+import type { Col, Row } from '../components/StatTable.astro';
+import { data, team, portrait, withUrl } from '../lib/data';
+
+const chars = data.characters;
+const byId = new Map(chars.map((c) => [c.charId, c]));
+
+const batters = chars.filter((c) => c.batting.pa > 0);
+const pitchers = chars.filter((c) => c.pitching.wasPitcher > 0);
+
+const batCols: Col[] = [
+  { key: 'ab', label: 'AB' }, { key: 'h', label: 'H' }, { key: 'hr', label: 'HR' },
+  { key: 'rbi', label: 'RBI' }, { key: 'bb', label: 'BB' }, { key: 'so', label: 'SO' },
+  { key: 'sb', label: 'SB' }, { key: 'avg', label: 'AVG', fmt: 'dp3' },
+  { key: 'obp', label: 'OBP', fmt: 'dp3' }, { key: 'slg', label: 'SLG', fmt: 'dp3' },
+  { key: 'ops', label: 'OPS', fmt: 'dp3' },
+];
+const batRows: Row[] = batters.map((c) => ({
+  charId: c.charId, name: c.name, team: c.team,
+  values: { ab: c.batting.ab, h: c.batting.h, hr: c.batting.hr, rbi: c.batting.rbi,
+    bb: c.batting.bb, so: c.batting.so, sb: c.batting.sb, avg: c.batting.avg,
+    obp: c.batting.obp, slg: c.batting.slg, ops: c.batting.ops },
+}));
+
+const pitCols: Col[] = [
+  { key: 'ip', label: 'IP', fmt: 'dp2' }, { key: 'era', label: 'ERA', fmt: 'dp2', sort: 'asc' },
+  { key: 'whip', label: 'WHIP', fmt: 'dp2', sort: 'asc' }, { key: 'so', label: 'K' },
+  { key: 'k9', label: 'K/9', fmt: 'dp2' }, { key: 'h', label: 'H' }, { key: 'bb', label: 'BB' },
+  { key: 'hr', label: 'HR' },
+];
+const pitRows: Row[] = pitchers.map((c) => ({
+  charId: c.charId, name: c.name, team: c.team,
+  values: { ip: c.pitching.ip, era: c.pitching.era, whip: c.pitching.whip, so: c.pitching.so,
+    k9: c.pitching.k9, h: c.pitching.h, bb: c.pitching.bb, hr: c.pitching.hr },
+}));
+
+type Hi = { title: string; charId: number; value: string };
+const first = (ids: number[]) => ids[0];
+const highlights: Hi[] = [
+  { title: 'Home runs', charId: first(data.leaders.batting.hr), value: `${byId.get(first(data.leaders.batting.hr))!.batting.hr} HR` },
+  { title: 'Batting avg', charId: first(data.leaders.batting.avg), value: byId.get(first(data.leaders.batting.avg))!.batting.avg.toFixed(3).replace(/^0/, '') },
+  { title: 'RBI', charId: first(data.leaders.batting.rbi), value: `${byId.get(first(data.leaders.batting.rbi))!.batting.rbi} RBI` },
+  { title: 'ERA', charId: first(data.leaders.pitching.era), value: byId.get(first(data.leaders.pitching.era))!.pitching.era.toFixed(2) },
+  { title: 'Strikeouts', charId: first(data.leaders.pitching.so), value: `${byId.get(first(data.leaders.pitching.so))!.pitching.so} K` },
+].filter((h) => h.charId !== undefined);
+---
+<Base title="Leaders" active="leaders">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">⭐ League leaders</span></div>
+  <div class="hi-grid">
+    {highlights.map((h) => {
+      const c = byId.get(h.charId)!;
+      const t = team(c.team);
+      return (
+        <a class="card hi" href={withUrl(`teams/${t.slug}`)} style={`--team:${t.color}`}>
+          <span class="hi-title">{h.title}</span>
+          <img class="pf hi-pf" src={withUrl(portrait(h.charId))} alt="" width={54} height={54} />
+          <span class="hi-name">{c.name}</span>
+          <span class="hi-val">{h.value}</span>
+        </a>
+      );
+    })}
+  </div>
+
+  <div class="section-head"><span class="pill">🏏 Batting</span></div>
+  <p class="muted" style="margin-top:-.5rem;font-size:.85rem">Click any column to sort.</p>
+  <StatTable columns={batCols} rows={batRows} sortKey="ops" sortDir="desc" kind="batting" />
+
+  <div class="section-head"><span class="pill">🔥 Pitching</span></div>
+  <StatTable columns={pitCols} rows={pitRows} sortKey="so" sortDir="desc" kind="pitching" />
+</Base>
+
+<style>
+  .hi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+  .hi { padding: .9rem; display: flex; flex-direction: column; align-items: center; gap: .35rem;
+        text-decoration: none; color: inherit; border-top: 8px solid var(--team); }
+  .hi-title { font-family: var(--font-display); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  .hi-pf { width: 54px; height: 54px; }
+  .hi-name { font-weight: 800; }
+  .hi-val { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; }
+</style>

@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import { standingsTeams, portrait, withUrl, pct3 } from '../../lib/data';
+const teams = standingsTeams();
+---
+<Base title="Teams" active="teams">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">🧢 Teams</span></div>
+  <div class="team-grid">
+    {teams.map((t) => (
+      <a class="card tcard" href={withUrl(`teams/${t.slug}`)} style={`--team:${t.color}`}>
+        <div class="tcard-head">
+          <img class="pf" src={withUrl(t.captainPortrait)} alt="" width={52} height={52} />
+          <div>
+            <div class="tname">{t.name}</div>
+            <div class="muted trec">{t.record.w}–{t.record.l} · {pct3(t.record.pct)}</div>
+          </div>
+          <span class="rank-badge" style="margin-left:auto">#{t.rank}</span>
+        </div>
+        <div class="roster-strip">
+          {t.roster.map((m) => (
+            <img class="pf mini" src={withUrl(portrait(m.charId))} alt={m.name} title={m.name} width={30} height={30} />
+          ))}
+        </div>
+      </a>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.1rem; }
+  .tcard { padding: 1rem; text-decoration: none; color: inherit; border-top: 8px solid var(--team); display: flex; flex-direction: column; gap: .8rem; }
+  .tcard:hover { transform: translate(-1px,-1px); box-shadow: 6px 6px 0 var(--ink); }
+  .tcard-head { display: flex; align-items: center; gap: .7rem; }
+  .tname { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; }
+  .trec { font-weight: 700; font-size: .9rem; }
+  .roster-strip { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .mini { width: 30px; height: 30px; }
+</style>

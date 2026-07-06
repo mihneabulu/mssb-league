@@ -1,0 +1,103 @@
+---
+import Base from '../../layouts/Base.astro';
+import StatTable from '../../components/StatTable.astro';
+import type { Col, Row } from '../../components/StatTable.astro';
+import GameCard from '../../components/GameCard.astro';
+import { data, teamGames, portrait, withUrl, pct3 } from '../../lib/data';
+
+export function getStaticPaths() {
+  return data.teams.map((t) => ({ params: { slug: t.slug } }));
+}
+const { slug } = Astro.params;
+const t = data.teams.find((x) => x.slug === slug)!;
+const games = teamGames(t.name).sort((a, b) => a.date - b.date);
+
+const batCols: Col[] = [
+  { key: 'ab', label: 'AB' }, { key: 'h', label: 'H' }, { key: 'hr', label: 'HR' },
+  { key: 'rbi', label: 'RBI' }, { key: 'bb', label: 'BB' }, { key: 'so', label: 'SO' },
+  { key: 'sb', label: 'SB' }, { key: 'avg', label: 'AVG', fmt: 'dp3' },
+  { key: 'ops', label: 'OPS', fmt: 'dp3' },
+];
+const batRows: Row[] = t.roster
+  .map((m) => data.characters.find((c) => c.charId === m.charId))
+  .filter((c): c is NonNullable<typeof c> => !!c && c.batting.pa > 0)
+  .map((c) => ({ charId: c.charId, name: c.name, team: t.name,
+    values: { ab: c.batting.ab, h: c.batting.h, hr: c.batting.hr, rbi: c.batting.rbi,
+      bb: c.batting.bb, so: c.batting.so, sb: c.batting.sb, avg: c.batting.avg, ops: c.batting.ops } }));
+
+const pitCols: Col[] = [
+  { key: 'ip', label: 'IP', fmt: 'dp2' }, { key: 'era', label: 'ERA', fmt: 'dp2', sort: 'asc' },
+  { key: 'whip', label: 'WHIP', fmt: 'dp2', sort: 'asc' }, { key: 'so', label: 'K' },
+  { key: 'h', label: 'H' }, { key: 'bb', label: 'BB' }, { key: 'hr', label: 'HR' },
+];
+const pitRows: Row[] = t.roster
+  .map((m) => data.characters.find((c) => c.charId === m.charId))
+  .filter((c): c is NonNullable<typeof c> => !!c && c.pitching.wasPitcher > 0)
+  .map((c) => ({ charId: c.charId, name: c.name, team: t.name,
+    values: { ip: c.pitching.ip, era: c.pitching.era, whip: c.pitching.whip, so: c.pitching.so,
+      h: c.pitching.h, bb: c.pitching.bb, hr: c.pitching.hr } }));
+---
+<Base title={t.name} active="teams">
+  <section class="thead card" style={`--team:${t.color}`}>
+    <img class="pf big" src={withUrl(t.captainPortrait)} alt="" width={84} height={84} />
+    <div class="thead-main">
+      <p class="kicker">Rank #{t.rank}</p>
+      <h1>{t.name}</h1>
+      <div class="statline">
+        <span><strong>{t.record.w}</strong>–<strong>{t.record.l}</strong></span>
+        <span class="muted">{pct3(t.record.pct)} · {t.record.diff > 0 ? '+' : ''}{t.record.diff} run diff</span>
+      </div>
+    </div>
+    <div class="mini-stats">
+      <div><span class="ms-n">{t.record.rf}</span><span class="ms-l">runs for</span></div>
+      <div><span class="ms-n">{t.record.ra}</span><span class="ms-l">runs against</span></div>
+      <div><span class="ms-n">{t.batting.avg.toFixed(3).replace(/^0/, '')}</span><span class="ms-l">team AVG</span></div>
+      <div><span class="ms-n">{t.pitching.era.toFixed(2)}</span><span class="ms-l">team ERA</span></div>
+    </div>
+  </section>
+
+  <div class="section-head"><span class="pill">🧢 Roster</span></div>
+  <div class="roster">
+    {t.roster.map((m) => (
+      <div class="rc">
+        <img class="pf" src={withUrl(portrait(m.charId))} alt="" width={48} height={48} />
+        <span class="rc-name">{m.name}</span>
+        {m.captain && <span class="tag" style="background:var(--gold)">C</span>}
+      </div>
+    ))}
+  </div>
+
+  <div class="section-head"><span class="pill">🏏 Batting</span></div>
+  <StatTable columns={batCols} rows={batRows} sortKey="ops" sortDir="desc" kind="batting" />
+
+  {pitRows.length > 0 && (
+    <>
+      <div class="section-head"><span class="pill">🔥 Pitching</span></div>
+      <StatTable columns={pitCols} rows={pitRows} sortKey="ip" sortDir="desc" kind="pitching" />
+    </>
+  )}
+
+  <div class="section-head"><span class="pill">📅 Games</span></div>
+  <div class="results-grid">
+    {games.map((g) => <GameCard game={g} />)}
+    {games.length === 0 && <p class="muted">No games recorded yet.</p>}
+  </div>
+</Base>
+
+<style>
+  .thead { margin-top: 1.4rem; padding: 1.3rem 1.5rem; display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; border-left: 12px solid var(--team); }
+  .pf.big { width: 84px; height: 84px; border-width: 3px; }
+  .thead-main { min-width: 200px; }
+  .kicker { font-family: var(--font-display); font-weight: 600; color: var(--dirt); margin: 0; text-transform: uppercase; letter-spacing: 1px; font-size: .8rem; }
+  .statline { display: flex; gap: .6rem; align-items: baseline; margin-top: .3rem; font-family: var(--font-display); font-size: 1.4rem; }
+  .statline .muted { font-size: .85rem; }
+  .mini-stats { display: grid; grid-template-columns: repeat(2, auto); gap: .5rem 1.4rem; margin-left: auto; }
+  .mini-stats > div { display: flex; flex-direction: column; }
+  .ms-n { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; }
+  .ms-l { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
+  .rc { display: flex; align-items: center; gap: .55rem; background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: .45rem .55rem; box-shadow: var(--shadow-sm); }
+  .rc-name { font-weight: 700; font-size: .92rem; }
+  .rc .tag { margin-left: auto; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+</style>
