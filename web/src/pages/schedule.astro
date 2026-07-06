@@ -1,23 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import TeamInline from '../components/TeamInline.astro';
-import { data, stadiumName, homeStadium } from '../lib/data';
+import { data, stadiumName, homeStadium, scheduleWithResults } from '../lib/data';
 
-// Assign played games to schedule slots in date order (double round-robin: each
-// pair meets twice, so the earlier unused game fills the earlier round).
-const used = new Set<string>();
-const rounds = data.schedule.map((rd) => ({
-  round: rd.round,
-  matchups: rd.matchups.map(([a, b]) => {
-    const g = data.games
-      .filter((x) => !used.has(x.gameId))
-      .sort((x, y) => x.date - y.date)
-      .find((x) => (x.away === a && x.home === b) || (x.away === b && x.home === a));
-    if (g) used.add(g.gameId);
-    return { a, b, game: g };
-  }),
-}));
-const currentRound = rounds.filter((r) => r.matchups.some((m) => m.game)).at(-1)?.round ?? 1;
+const { rounds, currentRound } = scheduleWithResults();
 ---
 <Base title="Schedule" active="schedule">
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">📅 Schedule</span></div>

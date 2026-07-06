@@ -100,6 +100,38 @@ export function teamGames(name: string): Game[] {
   return data.games.filter((g) => g.away === name || g.home === name);
 }
 
+export type ScheduledMatchup = { a: string; b: string; game?: Game };
+export type ScheduledRound = { round: number; matchups: ScheduledMatchup[] };
+
+// Assign played games to schedule slots in date order (double round-robin: each
+// pair meets twice, so the earlier unused game fills the earlier round). The
+// "current" round is the first one not yet fully played — i.e. once every game
+// in a week is in, "now playing" advances to the next week.
+export function scheduleWithResults(): {
+  rounds: ScheduledRound[];
+  currentRound: number;
+  complete: boolean;
+} {
+  const used = new Set<string>();
+  const rounds: ScheduledRound[] = data.schedule.map((rd) => ({
+    round: rd.round,
+    matchups: rd.matchups.map(([a, b]) => {
+      const g = data.games
+        .filter((x) => !used.has(x.gameId))
+        .sort((x, y) => x.date - y.date)
+        .find((x) => (x.away === a && x.home === b) || (x.away === b && x.home === a));
+      if (g) used.add(g.gameId);
+      return { a, b, game: g };
+    }),
+  }));
+  const firstIncomplete = rounds.find((r) => r.matchups.some((m) => !m.game));
+  const complete = !firstIncomplete && rounds.length > 0;
+  const currentRound = firstIncomplete
+    ? firstIncomplete.round
+    : (rounds.at(-1)?.round ?? 1);
+  return { rounds, currentRound, complete };
+}
+
 // Resolve a schedule matchup to a played game (if any). Returns actual home/away.
 export function findGame(a: string, b: string, afterOf: Set<string>): Game | undefined {
   return data.games.find(
