@@ -20,9 +20,10 @@ function battingLine(p: BoxPlayer) {
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">📊 Box scores</span></div>
 
   {games.map((g) => {
+    // Home team first (hosts at its own stadium).
     const sides = [
-      { label: 'Away', name: g.away, score: g.awayScore, players: g.boxscore.away },
       { label: 'Home', name: g.home, score: g.homeScore, players: g.boxscore.home },
+      { label: 'Away', name: g.away, score: g.awayScore, players: g.boxscore.away },
     ];
     return (
       <section id={g.gameId} class="card game">

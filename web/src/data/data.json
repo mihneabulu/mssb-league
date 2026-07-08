@@ -4,7 +4,7 @@
     "startDate": "2026-06-29",
     "rounds": 10
   },
-  "generatedAt": "2026-07-06T22:25:36.340096+00:00",
+  "generatedAt": "2026-07-08T05:48:49.671855+00:00",
   "teams": [
     {
       "name": "Omnipotent Oz",
@@ -181,7 +181,7 @@
           "portrait": "portraits/46.png"
         }
       ],
-      "color": "#1D9E75",
+      "color": "#DD4C97",
       "captainPortrait": "portraits/38.png",
       "stadium": "Mario Stadium",
       "record": {

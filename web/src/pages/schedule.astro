@@ -7,7 +7,7 @@ const { rounds, currentRound } = scheduleWithResults();
 ---
 <Base title="Schedule" active="schedule">
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">📅 Schedule</span></div>
-  <p class="muted" style="margin-top:-.5rem">{data.season.rounds}-round double round-robin. Home team listed second.</p>
+  <p class="muted" style="margin-top:-.5rem">{data.season.rounds}-round double round-robin. Home team listed first (hosts at their stadium).</p>
 
   <div class="rounds">
     {rounds.map((rd) => (
@@ -25,13 +25,13 @@ const { rounds, currentRound } = scheduleWithResults();
             const hoW = g && g.winner === home;
             return (
               <div class="mu">
-                <div class={`mu-row ${g && !awW ? 'dim' : ''}`}>
-                  <TeamInline name={away} size={28} bold={!!awW} />
-                  {g ? <span class="mu-score mono-num">{g.awayScore}</span> : <span class="mu-tag muted">away</span>}
-                </div>
                 <div class={`mu-row ${g && !hoW ? 'dim' : ''}`}>
                   <TeamInline name={home} size={28} bold={!!hoW} />
                   {g ? <span class="mu-score mono-num">{g.homeScore}</span> : <span class="mu-tag muted">home</span>}
+                </div>
+                <div class={`mu-row ${g && !awW ? 'dim' : ''}`}>
+                  <TeamInline name={away} size={28} bold={!!awW} />
+                  {g ? <span class="mu-score mono-num">{g.awayScore}</span> : <span class="mu-tag muted">away</span>}
                 </div>
                 <div class="mu-foot muted">
                   {g ? stadiumName(g.stadiumId) : <><span class="up-dot">•</span> {homeStadium(home)}</>}

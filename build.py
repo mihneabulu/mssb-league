@@ -140,6 +140,9 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
         if "Character Game Stats" not in game:
             continue
         cgs = game["Character Game Stats"]
+        # Project Rio's Away/Home is correct: the home team bats last (bottom) and
+        # the game is played at the home team's stadium (confirmed by game data —
+        # a leading home team never bats in the bottom of the final inning).
         away = identify(roster_ids(game, "Away"), lookup)
         home = identify(roster_ids(game, "Home"), lookup)
         as_, hs = game["Away Score"], game["Home Score"]

@@ -3,9 +3,10 @@ import type { Game } from '../lib/data';
 import { team, stadiumName, withUrl } from '../lib/data';
 import TeamInline from './TeamInline.astro';
 const { game } = Astro.props as { game: Game };
+// Home team listed first (home hosts at its own stadium).
 const rows = [
-  { name: game.away, score: game.awayScore },
-  { name: game.home, score: game.homeScore },
+  { name: game.home, score: game.homeScore, side: 'home' },
+  { name: game.away, score: game.awayScore, side: 'away' },
 ];
 const win = game.winner;
 ---
