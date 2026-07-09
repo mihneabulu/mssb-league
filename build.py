@@ -197,10 +197,25 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
 
     games.sort(key=lambda g: g["date"])
 
-    # standings: wins, then run differential, then runs scored
+    # standings: win % (ties count as half a win), then run diff per game, then
+    # total run diff. Percentage/per-game bases keep ranking fair when teams have
+    # played different numbers of games.
+    def games_played(n: str) -> int:
+        r = record[n]
+        return r["w"] + r["l"] + r["t"]
+
+    def win_pct(n: str) -> float:
+        r = record[n]
+        gp = games_played(n)
+        return (r["w"] + 0.5 * r["t"]) / gp if gp else 0.0
+
     standings = sorted(
         team_names,
-        key=lambda n: (record[n]["w"], record[n]["rf"] - record[n]["ra"], record[n]["rf"]),
+        key=lambda n: (
+            win_pct(n),
+            (record[n]["rf"] - record[n]["ra"]) / games_played(n) if games_played(n) else 0.0,
+            record[n]["rf"] - record[n]["ra"],
+        ),
         reverse=True,
     )
 
@@ -210,9 +225,9 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
         rec = record[n]
         teams_out.append({
             **t,
-            "record": {**rec, "gp": rec["w"] + rec["l"] + rec["t"],
+            "record": {**rec, "gp": games_played(n),
                        "diff": rec["rf"] - rec["ra"],
-                       "pct": r3(rec["w"] / (rec["w"] + rec["l"])) if (rec["w"] + rec["l"]) else 0.0},
+                       "pct": r3(win_pct(n))},
             "batting": bat_rates(team_bat[n]),
             "pitching": pit_rates(team_pit[n]),
             "rank": standings.index(n) + 1,
