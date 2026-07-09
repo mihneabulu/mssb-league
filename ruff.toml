@@ -1,0 +1,8 @@
+# Ruff config for the data pipeline scripts (ingest.py, build.py).
+# Run: uvx ruff check --fix  &&  uvx ruff format
+line-length = 100
+target-version = "py314"
+
+[lint]
+# pycodestyle (E/W), pyflakes (F), isort (I), pyupgrade (UP), bugbear (B).
+select = ["E", "W", "F", "I", "UP", "B"]

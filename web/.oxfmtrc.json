@@ -1,0 +1,4 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": ["src/env.d.ts", "src/data/**", "dist/**", ".astro/**"]
+}

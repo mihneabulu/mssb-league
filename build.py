@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.14"
 # dependencies = []
 # ///
 """
@@ -14,12 +14,13 @@ drafted whom, team colors, portraits, and the schedule.
 Stats computed per character (aggregated across all games), per team, and as
 league leaderboards, including advanced rates (AVG/OBP/SLG/OPS, ERA/WHIP/K9).
 """
+
 from __future__ import annotations
 
 import argparse
 import glob
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -42,14 +43,47 @@ def roster_ids(game: dict, side: str) -> frozenset[int]:
 
 # ---- stat accumulators -------------------------------------------------------
 
+
 def new_bat() -> dict:
-    return {k: 0 for k in ["gp", "ab", "h", "1b", "2b", "3b", "hr", "rbi", "bb",
-                           "hbp", "sf", "so", "sb", "starHits"]}
+    return {
+        k: 0
+        for k in [
+            "gp",
+            "ab",
+            "h",
+            "1b",
+            "2b",
+            "3b",
+            "hr",
+            "rbi",
+            "bb",
+            "hbp",
+            "sf",
+            "so",
+            "sb",
+            "starHits",
+        ]
+    }
 
 
 def new_pit() -> dict:
-    return {k: 0 for k in ["gp", "outs", "bf", "r", "er", "h", "hr", "bb", "hbp",
-                           "so", "pitches", "wasPitcher"]}
+    return {
+        k: 0
+        for k in [
+            "gp",
+            "outs",
+            "bf",
+            "r",
+            "er",
+            "h",
+            "hr",
+            "bb",
+            "hbp",
+            "so",
+            "pitches",
+            "wasPitcher",
+        ]
+    }
 
 
 def add_offense(acc: dict, o: dict) -> None:
@@ -98,8 +132,15 @@ def bat_rates(b: dict) -> dict:
     avg = h / ab if ab else 0.0
     obp = (h + bb + hbp) / obp_den if obp_den else 0.0
     slg = tb / ab if ab else 0.0
-    return {**b, "pa": pa, "tb": tb, "avg": r3(avg), "obp": r3(obp),
-            "slg": r3(slg), "ops": r3(obp + slg)}
+    return {
+        **b,
+        "pa": pa,
+        "tb": tb,
+        "avg": r3(avg),
+        "obp": r3(obp),
+        "slg": r3(slg),
+        "ops": r3(obp + slg),
+    }
 
 
 def pit_rates(p: dict) -> dict:
@@ -107,11 +148,17 @@ def pit_rates(p: dict) -> dict:
     era = 9 * p["er"] / ip if ip else 0.0
     whip = (p["h"] + p["bb"]) / ip if ip else 0.0
     k9 = 9 * p["so"] / ip if ip else 0.0
-    return {**p, "ip": round(ip, 1), "era": round(era, 2),
-            "whip": round(whip, 2), "k9": round(k9, 2)}
+    return {
+        **p,
+        "ip": round(ip, 1),
+        "era": round(era, 2),
+        "whip": round(whip, 2),
+        "k9": round(k9, 2),
+    }
 
 
 # ---- main build --------------------------------------------------------------
+
 
 def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
     data, lookup = load_teams(teams_path)
@@ -147,14 +194,22 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
         home = identify(roster_ids(game, "Home"), lookup)
         as_, hs = game["Away Score"], game["Home Score"]
 
-        record[away]["rf"] += as_; record[away]["ra"] += hs
-        record[home]["rf"] += hs; record[home]["ra"] += as_
+        record[away]["rf"] += as_
+        record[away]["ra"] += hs
+        record[home]["rf"] += hs
+        record[home]["ra"] += as_
         if as_ > hs:
-            record[away]["w"] += 1; record[home]["l"] += 1; winner = away
+            record[away]["w"] += 1
+            record[home]["l"] += 1
+            winner = away
         elif hs > as_:
-            record[home]["w"] += 1; record[away]["l"] += 1; winner = home
+            record[home]["w"] += 1
+            record[away]["l"] += 1
+            winner = home
         else:
-            record[away]["t"] += 1; record[home]["t"] += 1; winner = None
+            record[away]["t"] += 1
+            record[home]["t"] += 1
+            winner = None
 
         box = {"away": [], "home": []}
         for side, team in (("Away", away), ("Home", home)):
@@ -165,12 +220,15 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
                 add_offense(char_bat[cid], r["Offensive Stats"])
                 add_defense(team_pit[team], r["Defensive Stats"])
                 add_defense(char_pit[cid], r["Defensive Stats"])
-                box["away" if side == "Away" else "home"].append({
-                    "charId": cid, "name": char_name[cid],
-                    "captain": bool(r["Captain"]),
-                    "batting": bat_rates(new_bat() | _off(r["Offensive Stats"])),
-                    "pitching": pit_rates(new_pit() | _def(r["Defensive Stats"])),
-                })
+                box["away" if side == "Away" else "home"].append(
+                    {
+                        "charId": cid,
+                        "name": char_name[cid],
+                        "captain": bool(r["Captain"]),
+                        "batting": bat_rates(new_bat() | _off(r["Offensive Stats"])),
+                        "pitching": pit_rates(new_pit() | _def(r["Defensive Stats"])),
+                    }
+                )
 
         sid = game["StadiumID"]
         hs_name = home_stadium.get(home)
@@ -178,7 +236,8 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
             if sid in stadium_by_id and stadium_by_id[sid] != hs_name:
                 stadium_conflicts.append(
                     f"StadiumID {sid}: '{stadium_by_id[sid]}' vs '{hs_name}' "
-                    f"(game {Path(fp).name}) — not played at home stadium?")
+                    f"(game {Path(fp).name}) — not played at home stadium?"
+                )
             stadium_by_id[sid] = hs_name
 
         gid = Path(fp).name.rsplit("_", 1)[-1].removesuffix(".json")
@@ -186,14 +245,23 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
         parts = Path(fp).parent.name
         if parts.startswith("week-"):
             week = int(parts.split("-")[1])
-        games.append({
-            "gameId": gid, "week": week,
-            "date": int(game["Date - Start"]),
-            "dateISO": datetime.fromtimestamp(int(game["Date - Start"]), tz=timezone.utc).isoformat(),
-            "stadiumId": game["StadiumID"], "innings": game["Innings Played"],
-            "away": away, "home": home, "awayScore": as_, "homeScore": hs,
-            "winner": winner, "boxscore": box, "file": str(Path(fp).relative_to(results_dir.parent)),
-        })
+        games.append(
+            {
+                "gameId": gid,
+                "week": week,
+                "date": int(game["Date - Start"]),
+                "dateISO": datetime.fromtimestamp(int(game["Date - Start"]), tz=UTC).isoformat(),
+                "stadiumId": game["StadiumID"],
+                "innings": game["Innings Played"],
+                "away": away,
+                "home": home,
+                "awayScore": as_,
+                "homeScore": hs,
+                "winner": winner,
+                "boxscore": box,
+                "file": str(Path(fp).relative_to(results_dir.parent)),
+            }
+        )
 
     games.sort(key=lambda g: g["date"])
 
@@ -223,25 +291,35 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
     for t in data["teams"]:
         n = t["name"]
         rec = record[n]
-        teams_out.append({
-            **t,
-            "record": {**rec, "gp": games_played(n),
-                       "diff": rec["rf"] - rec["ra"],
-                       "pct": r3(win_pct(n))},
-            "batting": bat_rates(team_bat[n]),
-            "pitching": pit_rates(team_pit[n]),
-            "rank": standings.index(n) + 1,
-        })
+        teams_out.append(
+            {
+                **t,
+                "record": {
+                    **rec,
+                    "gp": games_played(n),
+                    "diff": rec["rf"] - rec["ra"],
+                    "pct": r3(win_pct(n)),
+                },
+                "batting": bat_rates(team_bat[n]),
+                "pitching": pit_rates(team_pit[n]),
+                "rank": standings.index(n) + 1,
+            }
+        )
 
     characters_out = []
     for c in range(54):
         if char_bat[c]["gp"] == 0 and char_pit[c]["gp"] == 0:
             continue
-        characters_out.append({
-            "charId": c, "name": char_name[c], "team": char_team.get(c),
-            "portrait": f"portraits/{c}.png",
-            "batting": bat_rates(char_bat[c]), "pitching": pit_rates(char_pit[c]),
-        })
+        characters_out.append(
+            {
+                "charId": c,
+                "name": char_name[c],
+                "team": char_team.get(c),
+                "portrait": f"portraits/{c}.png",
+                "batting": bat_rates(char_bat[c]),
+                "pitching": pit_rates(char_pit[c]),
+            }
+        )
 
     def top(items, key, n=10, mn_ab=None, mn_ip=None, reverse=True):
         pool = items
@@ -270,7 +348,7 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
 
     out = {
         "season": data["season"],
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "generatedAt": datetime.now(UTC).isoformat(),
         "teams": teams_out,
         "standings": standings,
         "games": games,
@@ -290,11 +368,15 @@ def build(teams_path: Path, results_dir: Path, out_path: Path) -> dict:
 
 
 def _off(o: dict) -> dict:
-    a = new_bat(); add_offense(a, o); return a
+    a = new_bat()
+    add_offense(a, o)
+    return a
 
 
 def _def(d: dict) -> dict:
-    a = new_pit(); add_defense(a, d); return a
+    a = new_pit()
+    add_defense(a, d)
+    return a
 
 
 def main() -> int:
@@ -304,12 +386,13 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=Path("web/src/data/data.json"))
     args = ap.parse_args()
     out = build(args.teams, args.results, args.out)
-    print(f"Built {args.out}: {len(out['games'])} games, "
-          f"{len(out['teams'])} teams, {len(out['characters'])} characters.")
+    print(
+        f"Built {args.out}: {len(out['games'])} games, "
+        f"{len(out['teams'])} teams, {len(out['characters'])} characters."
+    )
     print("Standings:", " > ".join(out["standings"]))
     known = out["stadiums"]["byId"]
-    print(f"Stadiums known: {len(known)}/6 -> " +
-          ", ".join(f"{k}={v}" for k, v in known.items()))
+    print(f"Stadiums known: {len(known)}/6 -> " + ", ".join(f"{k}={v}" for k, v in known.items()))
     for w in out["stadiumConflicts"]:
         print("  ! stadium conflict:", w)
     return 0

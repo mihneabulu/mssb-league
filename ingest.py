@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.14"
 # dependencies = []
 # ///
 """
@@ -19,6 +19,7 @@ Usage:
     ./ingest.py *.json --week 1                     # force a week number
     ./ingest.py game.json --copy --dry-run          # preview without touching
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,7 @@ import json
 import re
 import shutil
 import sys
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 FILENAME_RE = re.compile(r"^(?P<ts>\d{8}T\d{6})_.*_(?P<gid>\d+)\.json$")
@@ -35,7 +36,7 @@ FILENAME_RE = re.compile(r"^(?P<ts>\d{8}T\d{6})_.*_(?P<gid>\d+)\.json$")
 def load_teams(path: Path) -> dict:
     data = json.loads(path.read_text())
     lookup = {}  # frozenset(charIds) -> team name
-    slugs = {}   # name -> slug
+    slugs = {}  # name -> slug
     for team in data["teams"]:
         ids = frozenset(m["charId"] for m in team["roster"])
         lookup[ids] = team["name"]
@@ -67,7 +68,7 @@ def parse_source(src: Path, game: dict) -> tuple[str, str]:
     m = FILENAME_RE.match(src.name)
     if m:
         return m.group("ts"), m.group("gid")
-    ts = datetime.fromtimestamp(int(game["Date - Start"]), tz=timezone.utc).strftime("%Y%m%dT%H%M%S")
+    ts = datetime.fromtimestamp(int(game["Date - Start"]), tz=UTC).strftime("%Y%m%dT%H%M%S")
     return ts, str(game.get("GameID", "unknown"))
 
 
@@ -75,12 +76,13 @@ def week_for(game: dict, season_start: str, override: int | None) -> int:
     if override is not None:
         return override
     start = date.fromisoformat(season_start)
-    played = datetime.fromtimestamp(int(game["Date - Start"]), tz=timezone.utc).date()
+    played = datetime.fromtimestamp(int(game["Date - Start"]), tz=UTC).date()
     return max(1, (played - start).days // 7 + 1)
 
 
-def ingest_one(src: Path, teams: dict, out_root: Path, week_override: int | None,
-               copy: bool, dry_run: bool) -> dict:
+def ingest_one(
+    src: Path, teams: dict, out_root: Path, week_override: int | None, copy: bool, dry_run: bool
+) -> dict:
     game = json.loads(src.read_text())
     if "Character Game Stats" not in game:
         print(f"skip: {src.name} is not a Project Rio stat file")
@@ -97,12 +99,13 @@ def ingest_one(src: Path, teams: dict, out_root: Path, week_override: int | None
     dest_dir = out_root / f"week-{week:02d}"
     dest = dest_dir / fname
 
-    winner = away_name if away_score > home_score else home_name if home_score > away_score else None
+    winner = (
+        away_name if away_score > home_score else home_name if home_score > away_score else None
+    )
     verb = "COPY" if copy else "MOVE"
     flag = "" if (away_exact and home_exact) else "  (fuzzy roster match!)"
     print(f"[{verb}] {src.name}")
-    print(f"       {away_name} {away_score} @ {home_score} {home_name}"
-          f"  -> {winner or 'TIE'}{flag}")
+    print(f"       {away_name} {away_score} @ {home_score} {home_name}  -> {winner or 'TIE'}{flag}")
     print(f"       week-{week:02d}/{fname}")
 
     if not dry_run:
@@ -112,10 +115,15 @@ def ingest_one(src: Path, teams: dict, out_root: Path, week_override: int | None
         (shutil.copy2 if copy else shutil.move)(str(src), str(dest))
 
     return {
-        "gameId": gid, "timestamp": ts, "week": week,
-        "away": away_name, "home": home_name,
-        "awayScore": away_score, "homeScore": home_score,
-        "winner": winner, "file": str(dest.relative_to(out_root.parent)),
+        "gameId": gid,
+        "timestamp": ts,
+        "week": week,
+        "away": away_name,
+        "home": home_name,
+        "awayScore": away_score,
+        "homeScore": home_score,
+        "winner": winner,
+        "file": str(dest.relative_to(out_root.parent)),
         "exactMatch": away_exact and home_exact,
     }
 
@@ -124,8 +132,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Ingest & organize Project Rio MSB stat files.")
     ap.add_argument("files", nargs="+", type=Path, help="Raw .json stat file(s)")
     ap.add_argument("--teams", type=Path, default=Path("teams.json"))
-    ap.add_argument("--out", type=Path, default=Path("results"), help="Output root (default: results/)")
-    ap.add_argument("--week", type=int, default=None, help="Force a week number instead of inferring from date")
+    ap.add_argument(
+        "--out", type=Path, default=Path("results"), help="Output root (default: results/)"
+    )
+    ap.add_argument(
+        "--week", type=int, default=None, help="Force a week number instead of inferring from date"
+    )
     ap.add_argument("--copy", action="store_true", help="Copy instead of move (keep originals)")
     ap.add_argument("--dry-run", action="store_true", help="Show what would happen; change nothing")
     args = ap.parse_args()
