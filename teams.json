@@ -524,16 +524,16 @@
       "round": 2,
       "matchups": [
         [
-          "Booty Barn",
-          "Lego Meek"
+          "Lego Meek",
+          "Booty Barn"
         ],
         [
-          "Big Papa",
-          "Omnipotent Oz"
+          "Omnipotent Oz",
+          "Big Papa"
         ],
         [
-          "Flame Imp",
-          "Tickleball Predator"
+          "Tickleball Predator",
+          "Flame Imp"
         ]
       ]
     },
@@ -541,12 +541,12 @@
       "round": 3,
       "matchups": [
         [
-          "Big Papa",
-          "Flame Imp"
+          "Flame Imp",
+          "Big Papa"
         ],
         [
-          "Lego Meek",
-          "Tickleball Predator"
+          "Tickleball Predator",
+          "Lego Meek"
         ],
         [
           "Booty Barn",
@@ -558,8 +558,8 @@
       "round": 4,
       "matchups": [
         [
-          "Flame Imp",
-          "Omnipotent Oz"
+          "Omnipotent Oz",
+          "Flame Imp"
         ],
         [
           "Booty Barn",
@@ -575,8 +575,8 @@
       "round": 5,
       "matchups": [
         [
-          "Omnipotent Oz",
-          "Tickleball Predator"
+          "Tickleball Predator",
+          "Omnipotent Oz"
         ],
         [
           "Big Papa",
@@ -613,12 +613,12 @@
           "Booty Barn"
         ],
         [
-          "Omnipotent Oz",
-          "Big Papa"
+          "Big Papa",
+          "Omnipotent Oz"
         ],
         [
-          "Tickleball Predator",
-          "Flame Imp"
+          "Flame Imp",
+          "Tickleball Predator"
         ]
       ]
     },
@@ -626,12 +626,12 @@
       "round": 8,
       "matchups": [
         [
-          "Flame Imp",
-          "Big Papa"
+          "Big Papa",
+          "Flame Imp"
         ],
         [
-          "Tickleball Predator",
-          "Lego Meek"
+          "Lego Meek",
+          "Tickleball Predator"
         ],
         [
           "Omnipotent Oz",
@@ -643,8 +643,8 @@
       "round": 9,
       "matchups": [
         [
-          "Omnipotent Oz",
-          "Flame Imp"
+          "Flame Imp",
+          "Omnipotent Oz"
         ],
         [
           "Tickleball Predator",
@@ -660,8 +660,8 @@
       "round": 10,
       "matchups": [
         [
-          "Tickleball Predator",
-          "Omnipotent Oz"
+          "Omnipotent Oz",
+          "Tickleball Predator"
         ],
         [
           "Booty Barn",
