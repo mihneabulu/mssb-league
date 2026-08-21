@@ -609,8 +609,8 @@
       "round": 7,
       "matchups": [
         [
-          "Lego Meek",
-          "Booty Barn"
+          "Booty Barn",
+          "Lego Meek"
         ],
         [
           "Big Papa",
@@ -675,7 +675,7 @@
     }
   ],
   "stadiums": {
-    "note": "StadiumID->name is learned by build.py from played games (each game is at the home team's stadium). Confirmed so far below.",
+    "note": "StadiumID->name is learned by build.py from played games (each game is at the home team's stadium). All six confirmed below.",
     "names": [
       "Mario Stadium",
       "Peach Garden",
@@ -687,6 +687,7 @@
     "byId": {
       "0": "Mario Stadium",
       "3": "Yoshi Park",
+      "4": "Peach Garden",
       "5": "DK Jungle"
     }
   }
