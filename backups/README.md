@@ -3,6 +3,10 @@
 `league-backup.json` is a full export of every season — teams, rosters, schedule, games
 and box scores — written here nightly by `.github/workflows/backup.yml`.
 
+The committed copies have their export timestamps stripped, so a run only produces a
+commit when the league data actually changed; `git log -- backups/` is the record of when
+each snapshot was taken.
+
 It exists because the database has no history. Until this migration the git log *was* the
 backup: every game arrived as a commit and any mistake could be reverted. Now a league
 manager edits things in a browser and D1 keeps only the current state.

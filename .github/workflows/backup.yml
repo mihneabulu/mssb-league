@@ -175,6 +175,30 @@ jobs:
           print(f'{fetched} new, {skipped} already held, {len(files)} total')
           PY
 
+      # Both exports carry a timestamp, so the files differ every night even when the
+      # league has not changed — which would mean a meaningless commit daily forever.
+      # Git already records when each backup was taken, so the committed copies drop it
+      # and "nothing to commit" then means the data is genuinely unchanged.
+      - name: Normalise timestamps out of the committed copies
+        if: steps.creds.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib
+
+          for path, field in [
+              ('backups/league-backup.json', 'exportedAt'),
+              ('backups/raw/manifest.json', 'generatedAt'),
+          ]:
+              f = pathlib.Path(path)
+              if not f.exists():
+                  continue
+              data = json.loads(f.read_text())
+              data.pop(field, None)
+              f.write_text(json.dumps(data, indent=2) + '\n')
+          print('timestamps removed')
+          PY
+
       - name: Commit if anything changed
         if: steps.creds.outputs.ready == 'true'
         run: |
