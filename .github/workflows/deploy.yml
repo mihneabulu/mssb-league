@@ -51,6 +51,48 @@ jobs:
             echo "::notice::Skipping deploy — set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to enable it."
           fi
 
+      # Ask Cloudflare whether the token is valid before using it, so an invalid token
+      # and an under-scoped one produce different messages instead of the same opaque
+      # "Authentication error [code: 10000]".
+      - name: Verify the API token
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          echo "token: ${#TOKEN} chars"
+          case "${TOKEN}" in
+            *[[:space:]]*) echo "::warning::API token contains whitespace — check for a stray newline or a pasted label" ;;
+          esac
+          echo "account id: ${#ACCOUNT} chars"
+
+          verify=$(curl -sS --max-time 30 -H "Authorization: Bearer ${TOKEN}" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify || true)
+          echo "${verify}" | python3 -c "
+          import json, sys
+          try:
+              d = json.load(sys.stdin)
+          except Exception:
+              sys.exit('could not parse the verify response')
+          if d.get('success'):
+              print('token is VALID:', d['result'].get('status'))
+          else:
+              errs = '; '.join(f\"{e.get('code')}: {e.get('message')}\" for e in d.get('errors', []))
+              print('token is NOT valid ->', errs)
+          "
+
+          # Can it actually see D1? This is the permission the migration step needs.
+          code=$(curl -sS --max-time 30 -o /tmp/d1.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/d1/database" || true)
+          echo "D1 list -> HTTP ${code}"
+          if [ "${code}" != "200" ]; then
+            head -c 300 /tmp/d1.json; echo
+            echo "::error::The API token cannot read D1. Recreate it with both 'Workers Scripts: Edit' and 'D1: Edit' (the 'Edit Cloudflare Workers' template does not always include D1)."
+            exit 1
+          fi
+
       - name: Apply database migrations
         if: steps.creds.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3
