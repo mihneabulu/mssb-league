@@ -91,7 +91,7 @@ const steps = [
   ) : (
     <form class="card block" method="post" action={`/api/admin/seasons/${slug}`}>
       <p class="muted" style="margin:0">Drag isn't needed — the order here is the order shown when records are tied.</p>
-      <div style="overflow-x:auto">
+      <div class="table-scroll">
         <table class="grid teams">
           <thead>
             <tr><th>Name</th><th>Address</th><th>Colour</th><th>Home stadium</th><th>Captain</th><th>Roster</th><th></th></tr>

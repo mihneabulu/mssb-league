@@ -44,7 +44,7 @@ const recent = await db.all(
   {recent.length > 0 && (
     <>
       <div class="section-head"><span class="pill">🕓 Recent uploads</span></div>
-      <div class="card" style="overflow:hidden">
+      <div class="card table-card">
         <table class="grid">
           <thead><tr><th>When</th><th>By</th><th>Files</th><th>Status</th><th></th></tr></thead>
           <tbody>

@@ -57,7 +57,7 @@ const badge = (s: (typeof staged)[number]) => {
   )}
 
   <form method="post" action={`/api/admin/uploads/${batchId}/commit`}>
-    <div class="card" style="overflow-x:auto">
+    <div class="card table-card">
       <table class="grid review">
         <thead>
           <tr>
@@ -71,7 +71,7 @@ const badge = (s: (typeof staged)[number]) => {
             const a = s.analyzed;
             return (
               <tr class={s.status === 'error' ? 'row-err' : undefined}>
-                <td>
+                <td data-label="Save">
                   <input type="hidden" name="staged" value={s.id} />
                   <input
                     type="checkbox"
@@ -80,11 +80,11 @@ const badge = (s: (typeof staged)[number]) => {
                     disabled={s.status === 'error' || committed}
                   />
                 </td>
-                <td style="text-align:left" class="fname">
+                <td style="text-align:left" class="fname" data-label="File">
                   {s.filename}
                   {a.wasDecoded && <span class="tag">decoded</span>}
                 </td>
-                <td>
+                <td data-label="Away">
                   <select name={`away-${s.id}`} disabled={s.status === 'error' || committed}>
                     <option value="">— pick a team —</option>
                     {teams.map((t) => (
@@ -92,8 +92,8 @@ const badge = (s: (typeof staged)[number]) => {
                     ))}
                   </select>
                 </td>
-                <td class="mono-num score">{s.status === 'error' ? '' : a.awayScore}</td>
-                <td>
+                <td class="mono-num score" data-label="Away score">{s.status === 'error' ? '' : a.awayScore}</td>
+                <td data-label="Home">
                   <select name={`home-${s.id}`} disabled={s.status === 'error' || committed}>
                     <option value="">— pick a team —</option>
                     {teams.map((t) => (
@@ -101,8 +101,8 @@ const badge = (s: (typeof staged)[number]) => {
                     ))}
                   </select>
                 </td>
-                <td class="mono-num score">{s.status === 'error' ? '' : a.homeScore}</td>
-                <td>
+                <td class="mono-num score" data-label="Home score">{s.status === 'error' ? '' : a.homeScore}</td>
+                <td data-label="Round">
                   <select name={`round-${s.id}`} disabled={s.status === 'error' || committed}>
                     <option value="">unscheduled</option>
                     {rounds.map((r) => (
@@ -112,7 +112,7 @@ const badge = (s: (typeof staged)[number]) => {
                     ))}
                   </select>
                 </td>
-                <td style="text-align:left">
+                <td style="text-align:left" data-label="Detected">
                   <span class={`badge ${b.cls}`}>{b.text}</span>
                   {s.error && <div class="note err">{s.error}</div>}
                   {a.warnings?.map((w) => <div class="note">{w.message}</div>)}
@@ -154,4 +154,38 @@ const badge = (s: (typeof staged)[number]) => {
   .note { font-size: .74rem; margin-top: .25rem; max-width: 380px; }
   .note.err { color: var(--dirt); font-weight: 600; }
   .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+
+  @media (max-width: 560px) {
+    /* A table of eight columns cannot be read on a phone, and scrolling it
+       sideways hides exactly the warnings the reader is here to check. Each file
+       becomes a card instead, with every cell carrying its own label. */
+    .review, .review tbody, .review tr, .review td { display: block; width: 100%; }
+    .review thead { display: none; }
+    .review tr {
+      border: 3px solid var(--line); border-radius: 14px;
+      padding: .6rem .7rem; margin-bottom: .9rem; background: var(--card);
+    }
+    .review tr.row-err { border-color: var(--dirt); }
+    .review td {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: .8rem; padding: .3rem 0; border: 0; text-align: left !important;
+    }
+    .review td::before {
+      content: attr(data-label);
+      font-size: .68rem; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--ink-soft); font-weight: 700; flex: none;
+    }
+    .review td[data-label='Detected'] { flex-direction: column; align-items: flex-start; gap: .3rem; }
+    /* A Rio filename is long and has no natural break points, so it gets the full
+       width of the card rather than competing with its label for one line. */
+    .review td[data-label='File'] {
+      flex-direction: column; align-items: flex-start; gap: .15rem;
+      font-size: .74rem; word-break: break-all;
+    }
+    .review .fname { max-width: none; }
+    .review select { width: auto; max-width: 62%; min-width: 0; }
+    .review .note { max-width: none; white-space: normal; }
+    .actions { flex-direction: column; align-items: stretch; gap: .6rem; }
+  }
+
 </style>

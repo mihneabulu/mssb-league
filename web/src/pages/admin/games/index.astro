@@ -72,25 +72,29 @@ const unassigned = games.filter((g) => g.round_no === null).length;
       </div>
 
       <div class="grid-row">
-        <label class="f">
-          <span class="lbl">Away</span>
-          <select name="away">
-            {teams.map((t) => (
-              <option value={Number(t.id)} selected={Number(t.id) === Number(g.away_team_id)}>{t.name}</option>
-            ))}
-          </select>
-        </label>
-        <span class="score mono-num">{g.away_score}</span>
+        <div class="side">
+          <label class="f">
+            <span class="lbl">Away</span>
+            <select name="away">
+              {teams.map((t) => (
+                <option value={Number(t.id)} selected={Number(t.id) === Number(g.away_team_id)}>{t.name}</option>
+              ))}
+            </select>
+          </label>
+          <span class="score mono-num">{g.away_score}</span>
+        </div>
         <span class="at muted">@</span>
-        <label class="f">
-          <span class="lbl">Home</span>
-          <select name="home">
-            {teams.map((t) => (
-              <option value={Number(t.id)} selected={Number(t.id) === Number(g.home_team_id)}>{t.name}</option>
-            ))}
-          </select>
-        </label>
-        <span class="score mono-num">{g.home_score}</span>
+        <div class="side">
+          <label class="f">
+            <span class="lbl">Home</span>
+            <select name="home">
+              {teams.map((t) => (
+                <option value={Number(t.id)} selected={Number(t.id) === Number(g.home_team_id)}>{t.name}</option>
+              ))}
+            </select>
+          </label>
+          <span class="score mono-num">{g.home_score}</span>
+        </div>
         <label class="f">
           <span class="lbl">Round</span>
           <select name="round">
@@ -131,8 +135,22 @@ const unassigned = games.filter((g) => g.round_no === null).length;
   .gamerow { padding: .8rem 1rem; margin-bottom: .9rem; display: flex; flex-direction: column; gap: .6rem; }
   .head { font-size: .76rem; display: flex; gap: .4rem; flex-wrap: wrap; }
   .grid-row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; }
+  .side { display: flex; align-items: flex-end; gap: .5rem; }
   .score { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; padding-bottom: .1rem; }
   .at { padding-bottom: .35rem; }
   .row-actions { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+
+  @media (max-width: 560px) {
+    /* One field per line; the score stays beside its team so the matchup is
+       still readable at a glance. */
+    .grid-row { flex-direction: column; align-items: stretch; gap: .55rem; }
+    .side { align-items: flex-end; }
+    .side .f { flex: 1; }
+    .at { display: none; }
+    .head { font-size: .7rem; gap: .25rem; }
+    .row-actions { gap: .45rem; }
+    .row-actions .btn { flex: 1; white-space: nowrap; }
+    .gamerow { padding: .75rem .8rem; }
+  }
 </style>
 

@@ -52,7 +52,7 @@ const unassigned = await db.all(
   )}
 
   <div class="section-head"><span class="pill">📅 Seasons</span></div>
-  <div class="card" style="overflow:hidden">
+  <div class="card table-card">
     <table class="grid">
       <thead>
         <tr><th>Season</th><th>Slug</th><th>Status</th><th>Starts</th><th>Rounds</th><th></th></tr>
@@ -79,7 +79,7 @@ const unassigned = await db.all(
   {recent.length === 0
     ? <p class="muted">Nothing yet — every change made here will be logged with who made it.</p>
     : (
-      <div class="card" style="overflow:hidden">
+      <div class="card table-card">
         <table class="grid">
           <thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th></tr></thead>
           <tbody>

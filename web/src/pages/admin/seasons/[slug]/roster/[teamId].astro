@@ -114,6 +114,21 @@ const available = cells.filter((c) => !c.takenBy).length;
   .cname { font-size: .74rem; font-weight: 700; line-height: 1.1; }
   .owner { font-size: .62rem; color: var(--ink-soft); }
   img { border-radius: 8px; }
+
+  @media (max-width: 560px) {
+    /* Not sticky on a phone: a wrapped three-line bar pinned to the top would
+       cost more of the screen than the grid it is meant to help with. */
+    .bar { position: static; gap: .5rem; padding: .7rem .8rem; }
+    .capwrap { margin-left: 0; width: 100%; }
+    .capwrap select { flex: 1; }
+    .count { font-size: 1rem; }
+    /* Four across instead of three: more of the draft visible per scroll, and
+       the portraits stay legible. */
+    .grid-chars { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .4rem; }
+    .cell { padding: .4rem .2rem; border-width: 2px; }
+    .cname { font-size: .68rem; }
+    .owner { font-size: .58rem; }
+  }
 </style>
 
 <script>

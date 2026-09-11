@@ -62,4 +62,18 @@ const nav = [
   .admin-bar .nav a[aria-current='page'] { color: var(--gold); }
   .who { margin-left: auto; color: #fff; font-size: .8rem; opacity: .85; display: flex; align-items: center; gap: .4rem; }
   .devtag { background: var(--dirt); color: #fff; }
+
+  @media (max-width: 560px) {
+    /* The identity moves under the nav rather than competing with it for the
+       same row, and the nav gets the full width so five items wrap evenly. */
+    .admin-bar .nav { width: 100%; margin-left: 0; }
+    .who {
+      margin-left: 0;
+      width: 100%;
+      font-size: .72rem;
+      justify-content: flex-start;
+      padding-top: .15rem;
+      border-top: 1px solid rgba(255,255,255,.15);
+    }
+  }
 </style>

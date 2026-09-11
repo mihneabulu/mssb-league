@@ -119,6 +119,18 @@
   margin: 0;
 }
 
+/*
+ * A card wrapping a table. Clips to the rounded corners on a wide screen; scrolls
+ * sideways on a narrow one, where clipping would simply hide columns with no way to
+ * reach them.
+ */
+.table-card {
+  overflow: hidden;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+
 /* Form controls, scoped to the admin shell so the public pages are untouched. */
 .admin input,
 .admin select,
@@ -138,4 +150,65 @@
 }
 .admin input[type='checkbox'] {
   width: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * Phones.
+ *
+ * The admin is genuinely used from a phone — a game gets uploaded from the sofa
+ * right after it is played — so these are not an afterthought. The breakpoint
+ * matches the public site's.
+ * ------------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  /* 16px is the threshold below which iOS Safari zooms the page when a field is
+     focused, which then leaves the layout scrolled sideways. Every control gets
+     at least that, and a taller tap target. */
+  .admin input,
+  .admin select,
+  .admin textarea {
+    font-size: 16px;
+    padding: 0.5rem 0.55rem;
+    width: 100%;
+  }
+
+  /* Stack labelled fields rather than letting them wrap unpredictably. */
+  .fields,
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+  .f,
+  .f.grow {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Comfortable thumb targets; buttons go full width so they cannot end up as a
+     40px sliver next to a wrapped neighbour. */
+  .btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem 1rem;
+  }
+  .btn.sm {
+    width: auto;
+    padding: 0.45rem 0.9rem;
+  }
+  .block {
+    padding: 0.9rem;
+  }
+
+  /* Tables of inputs stay scrollable rather than squashing their controls to
+     nothing; the shadow hints there is more to the right. */
+  .scroll-x,
+  .table-scroll,
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin .grid th,
+  .admin .grid td {
+    white-space: nowrap;
+  }
 }
