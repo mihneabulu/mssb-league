@@ -1,12 +1,16 @@
 ---
 import '../styles/global.css';
-import { data, withUrl } from '../lib/data';
+
 const { title, active } = Astro.props as { title?: string; active?: string };
+const { view, links, seasons } = Astro.locals;
+const season = view.season;
+
 const nav = [
-  { href: '', label: 'Standings', key: 'home' },
-  { href: 'schedule', label: 'Schedule', key: 'schedule' },
-  { href: 'teams', label: 'Teams', key: 'teams' },
-  { href: 'leaders', label: 'Leaders', key: 'leaders' },
+  { href: links.home, label: 'Standings', key: 'home' },
+  { href: links.schedule, label: 'Schedule', key: 'schedule' },
+  { href: links.teams, label: 'Teams', key: 'teams' },
+  { href: links.games, label: 'Box scores', key: 'games' },
+  { href: links.leaders, label: 'Leaders', key: 'leaders' },
 ];
 ---
 <!doctype html>
@@ -14,22 +18,32 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title ? `${title} · ` : ''}{data.season.name}</title>
-    <meta name="description" content={data.season.name} />
+    <title>{title ? `${title} · ` : ''}{season.name}</title>
+    <meta name="description" content={season.name} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='white' stroke='%23e2402f' stroke-width='8'/></svg>" />
   </head>
   <body>
     <header class="topbar">
       <div class="topbar-inner">
-        <a class="brand" href={withUrl('')}>
+        <a class="brand" href={links.home}>
           <span class="ball">⚾</span>
           <span>MSB League</span>
         </a>
         <nav class="nav">
           {nav.map((n) => (
-            <a href={withUrl(n.href)} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>
+            <a href={n.href} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>
           ))}
         </nav>
+        {seasons.length > 1 && (
+          <nav class="season-switch" aria-label="Season">
+            {seasons.map((s) => (
+              <a
+                href={links.season(s.slug)}
+                aria-current={s.slug === links.seasonSlug ? 'page' : undefined}
+              >{s.shortLabel}</a>
+            ))}
+          </nav>
+        )}
       </div>
     </header>
     <main class="wrap">
@@ -38,7 +52,7 @@ const nav = [
     <div id="tip" role="tooltip" aria-hidden="true"></div>
     <footer class="wrap" style="padding-top:0">
       <p class="muted" style="font-size:.8rem; border-top:2px solid #efe4d2; padding-top:1rem">
-        {data.season.name} · generated {new Date(data.generatedAt).toLocaleDateString()} · stats via Project Rio
+        {season.name} · updated {new Date(view.data.generatedAt).toLocaleDateString()} · stats via Project Rio
       </p>
     </footer>
     <script>
@@ -83,3 +97,15 @@ const nav = [
     </script>
   </body>
 </html>
+
+<style>
+  .season-switch { margin-left: auto; display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
+  .season-switch a {
+    font-size: .78rem; font-weight: 700; text-decoration: none; color: inherit;
+    border: 2px solid var(--line); border-radius: 999px; padding: .15rem .6rem;
+    background: var(--card);
+  }
+  .season-switch a[aria-current='page'] {
+    background: var(--ink); color: #fff; border-color: var(--ink);
+  }
+</style>

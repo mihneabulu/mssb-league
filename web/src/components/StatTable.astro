@@ -1,11 +1,12 @@
 ---
-import { team, portrait, withUrl, STAT_INFO } from '../lib/data';
+import { portrait, STAT_INFO } from '../lib/format.ts';
 export type Col = { key: string; label: string; fmt?: 'int' | 'dp3' | 'dp2'; sort?: 'asc' | 'desc' };
 export type Row = { charId: number; name: string; team: string; values: Record<string, number> };
 const { columns, rows, sortKey, sortDir = 'desc', caption, kind = 'batting' } = Astro.props as {
   columns: Col[]; rows: Row[]; sortKey?: string; sortDir?: 'asc' | 'desc'; caption?: string;
   kind?: 'batting' | 'pitching';
 };
+const { view, links } = Astro.locals;
 const info = STAT_INFO[kind];
 const fmt = (v: number, f?: string) =>
   f === 'dp3' ? (v === 1 ? '1.000' : v.toFixed(3).replace(/^0/, ''))
@@ -30,13 +31,13 @@ const initialKey = sortKey ?? columns[0]?.key;
     </thead>
     <tbody>
       {rows.map((r) => {
-        const t = team(r.team);
+        const t = view.team(r.team);
         return (
           <tr data-name={r.name}>
             <td>
-              <a href={withUrl(`teams/${t.slug}`)} class="player">
-                <img class="pf" src={withUrl(portrait(r.charId))} alt="" width={28} height={28} loading="lazy" />
-                <span class="chip" style={`background:${t.color}`}></span>
+              <a href={t ? links.team(t.slug) : '#'} class="player">
+                <img class="pf" src={portrait(r.charId)} alt="" width={28} height={28} loading="lazy" />
+                <span class="chip" style={`background:${t?.color ?? 'transparent'}`}></span>
                 <span class="pname">{r.name}</span>
               </a>
             </td>

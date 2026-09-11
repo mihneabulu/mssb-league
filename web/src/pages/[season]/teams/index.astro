@@ -1,15 +1,17 @@
 ---
-import Base from '../../layouts/Base.astro';
-import { standingsTeams, portrait, withUrl, pct3 } from '../../lib/data';
-const teams = standingsTeams();
+import Base from '../../../layouts/Base.astro';
+import { portrait, pct3 } from '../../../lib/format.ts';
+
+const { view, links } = Astro.locals;
+const teams = view.standingsTeams();
 ---
 <Base title="Teams" active="teams">
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">🧢 Teams</span></div>
   <div class="team-grid">
     {teams.map((t) => (
-      <a class="card tcard" href={withUrl(`teams/${t.slug}`)} style={`--team:${t.color}`}>
+      <a class="card tcard" href={links.team(t.slug)} style={`--team:${t.color}`}>
         <div class="tcard-head">
-          <img class="pf" src={withUrl(t.captainPortrait)} alt="" width={52} height={52} />
+          <img class="pf" src={`/${t.captainPortrait}`} alt="" width={52} height={52} />
           <div>
             <div class="tname">{t.name}</div>
             <div class="muted trec">{t.record.w}–{t.record.l} · {pct3(t.record.pct)}</div>
@@ -18,7 +20,7 @@ const teams = standingsTeams();
         </div>
         <div class="roster-strip">
           {t.roster.map((m) => (
-            <img class="pf mini" src={withUrl(portrait(m.charId))} alt={m.name} title={m.name} width={30} height={30} />
+            <img class="pf mini" src={portrait(m.charId)} alt={m.name} title={m.name} width={30} height={30} />
           ))}
         </div>
       </a>

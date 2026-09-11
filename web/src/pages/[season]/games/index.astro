@@ -1,0 +1,81 @@
+---
+import Base from '../../../layouts/Base.astro';
+import TeamInline from '../../../components/TeamInline.astro';
+
+// A list of line scores, not box scores.
+//
+// This page used to render every player's full batting line for every game on one page.
+// At 14 games that was already the heaviest page on the site; at a full 30-game season
+// it would be the thing that blows the Workers free-tier 10 ms CPU budget. Each box score
+// now lives on its own route, which also makes "Box score →" a real deep link instead of
+// a jump to an anchor halfway down a huge document.
+const { view, links } = Astro.locals;
+const data = view.data;
+
+const games = [...data.games].sort((a, b) => b.date - a.date);
+
+const byRound = new Map<number | null, typeof games>();
+for (const g of games) {
+  const list = byRound.get(g.round);
+  if (list) list.push(g);
+  else byRound.set(g.round, [g]);
+}
+const rounds = [...byRound.entries()].sort((a, b) => (b[0] ?? 0) - (a[0] ?? 0));
+---
+<Base title="Box scores" active="games">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">📊 Box scores</span></div>
+  <p class="muted" style="margin-top:-.5rem">{games.length} games played. Pick one for the full box score.</p>
+
+  {rounds.map(([round, list]) => (
+    <section class="round-block">
+      <h2 class="round-title">{round === null ? 'Unscheduled' : `Round ${round}`}</h2>
+      <div class="card" style="overflow:hidden">
+        <table class="grid games">
+          <tbody>
+            {list.map((g) => (
+              <tr>
+                <td class="date muted">{new Date(g.date * 1000).toLocaleDateString()}</td>
+                <td class="side">
+                  <span class={g.winner === g.away ? 'won' : 'lost'}>
+                    <TeamInline name={g.away} size={26} bold={g.winner === g.away} />
+                  </span>
+                </td>
+                <td class="mono-num score">{g.awayScore}</td>
+                <td class="at muted">@</td>
+                <td class="side">
+                  <span class={g.winner === g.home ? 'won' : 'lost'}>
+                    <TeamInline name={g.home} size={26} bold={g.winner === g.home} />
+                  </span>
+                </td>
+                <td class="mono-num score">{g.homeScore}</td>
+                <td class="venue muted col-hide-sm">{view.stadiumName(g.stadiumId)}</td>
+                <td class="go"><a href={links.game(g.gameId)}>Box score →</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+
+  {games.length === 0 && <p class="muted">No games recorded yet.</p>}
+</Base>
+
+<style>
+  .round-block { margin-bottom: 1.4rem; }
+  .round-title { font-family: var(--font-display); font-size: 1.1rem; margin: 0 0 .5rem; }
+  .games td { padding: .6rem .5rem; vertical-align: middle; }
+  .games td:first-child { padding-left: 1rem; }
+  .games td:last-child { padding-right: 1rem; }
+  .games .side { text-align: left; min-width: 0; }
+  .games .lost { opacity: .62; }
+  .games .score { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+  .games .at { font-size: .8rem; }
+  .games .date { font-size: .78rem; white-space: nowrap; }
+  .games .venue { font-size: .78rem; }
+  .games .go a { font-weight: 700; text-decoration: none; white-space: nowrap; font-size: .82rem; }
+  .games .go a:hover { text-decoration: underline; }
+  @media (max-width: 560px) {
+    .games .date { display: none; }
+  }
+</style>
