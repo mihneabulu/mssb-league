@@ -111,12 +111,17 @@ jobs:
         if: steps.creds.outputs.ready == 'true'
         run: |
           set -euo pipefail
-          if git diff --quiet -- backups/; then
-            echo "No change since the last backup."
-            exit 0
-          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage first, then compare the index. `git diff` alone only looks at tracked
+          # files, so a brand new backup file registered as "no change" and was never
+          # committed — the job went green while producing nothing.
           git add backups/
+          if git diff --cached --quiet -- backups/; then
+            echo "Backup is identical to the last one; nothing to commit."
+            exit 0
+          fi
+
           git commit -m "Nightly league backup"
           git push
