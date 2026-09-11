@@ -76,6 +76,24 @@ const rounds = [...byRound.entries()].sort((a, b) => (b[0] ?? 0) - (a[0] ?? 0));
   .games .go a { font-weight: 700; text-decoration: none; white-space: nowrap; font-size: .82rem; }
   .games .go a:hover { text-decoration: underline; }
   @media (max-width: 560px) {
-    .games .date { display: none; }
+    /* Seven columns do not fit a phone, and the card clips rather than scrolls —
+       which hid the home team and put "Box score" out of reach entirely. Each game
+       becomes a small card: team and score per line, venue and link beneath. */
+    .games, .games tbody, .games tr, .games td { display: block; }
+    .games tr {
+      border: 2px solid var(--line); border-radius: 12px;
+      padding: .5rem .65rem; margin-bottom: .7rem;
+    }
+    .games td { padding: .15rem 0; }
+    .games .date, .games .at { display: none; }
+    /* Team and its score share a line. */
+    .games .side { display: inline-flex; width: 76%; vertical-align: middle; }
+    .games .score { display: inline-block; width: 22%; text-align: right; vertical-align: middle; }
+    .games .venue {
+      display: block !important; font-size: .74rem; text-align: left;
+      border-top: 2px solid var(--line); margin-top: .35rem; padding-top: .35rem;
+    }
+    .games .go { text-align: left; }
+    .games .go a { font-size: .85rem; }
   }
 </style>

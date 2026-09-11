@@ -2,6 +2,9 @@
 // visitors from the edge cache.
 
 import { defineMiddleware } from 'astro:middleware';
+
+/** Injected by vite at build time; see astro.config.mjs. */
+declare const __BUILD_ID__: string;
 // Astro 7 removed Astro.locals.runtime.env; bindings come from the Workers runtime.
 import { env } from 'cloudflare:workers';
 
@@ -90,9 +93,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // correct, and the edge cache (below) is what actually matters: a repeat request is
   // served from cache for ~1 ms of CPU without re-rendering.
   //
-  // Strong rather than weak (W/): for a given season version the bytes are identical.
-  const etag = `"${slug}-${version}"`;
-  const cacheKey = new Request(`${url.origin}${url.pathname}?__v=${version}`, {
+  // Strong rather than weak (W/): for a given season version and build, the bytes are
+  // identical. The build id matters as much as the data version — keyed on the version
+  // alone, a deploy that changed only markup or CSS could not reach an already-cached
+  // page until somebody happened to edit the league.
+  const stamp = `${version}-${__BUILD_ID__}`;
+  const etag = `"${slug}-${stamp}"`;
+  const cacheKey = new Request(`${url.origin}${url.pathname}?__v=${stamp}`, {
     method: 'GET',
   });
   const useCache = isGet && import.meta.env.PROD;
