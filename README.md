@@ -49,9 +49,11 @@ legacy/                   the retired Python scripts, kept as provenance
 backups/                  nightly export of everything, committed by CI
 ```
 
-Each season is aggregated into a single JSON snapshot — about 11 KB gzipped — which is
-recomputed on every change and served from one row. The edge cache key includes the
-season's version, so a change makes the old cached pages unreachable rather than stale.
+Each season is aggregated into a single JSON snapshot — 34 KB stored, 5.6 KB gzipped for
+Season 1 — which is recomputed on every change and served from one row. Box scores are
+kept out of it and read per game, since they are about half the bulk and only one page
+needs them. The edge cache key includes the season's version, so a change makes the old
+cached pages unreachable rather than stale.
 
 URLs are season-scoped (`/s1/schedule`) with `/` redirecting to the current season, so a
 link shared today still shows the same games next year.
