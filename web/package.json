@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:parity": "vitest run test/parity.test.ts",
-    "typecheck": "wrangler types && tsc --noEmit",
+    "typecheck": "wrangler types && astro check && tsc --noEmit",
     "import:legacy": "node --experimental-strip-types scripts/import-legacy.ts",
     "db:migrate": "wrangler d1 migrations apply mssb-league --local",
     "db:seed": "wrangler d1 execute mssb-league --local --file=./migrations/seed/season-1.sql",
@@ -25,11 +25,12 @@
     "jose": "^6.2.12"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@astrojs/cloudflare": "^14.3.1",
     "@types/node": "^22.20.2",
     "oxfmt": "^0.58.0",
     "oxlint": "^1.73.0",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vitest": "^3.2.7",
     "wrangler": "^4.131.0"
   }

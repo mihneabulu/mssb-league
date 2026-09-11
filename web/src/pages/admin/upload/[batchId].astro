@@ -1,0 +1,159 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import Flash from '../../../components/admin/Flash.astro';
+import { listStaged } from '../../../lib/db/uploads.ts';
+import { stadiumName } from '../../../lib/mssb/reference.ts';
+
+// The review table. This is the direct replacement for reading ingest.py's stdout and
+// re-running it with --week: the same information, except a correction made here is
+// recorded rather than having to be re-derived every time.
+const { db } = Astro.locals;
+const batchId = Astro.params.batchId!;
+
+const batchRows = await db.all(
+  `SELECT b.id, b.season_id, b.status, s.short_label, s.slug
+   FROM upload_batches b JOIN seasons s ON s.id = b.season_id WHERE b.id = ?`,
+  [batchId],
+);
+const batch = batchRows[0];
+if (!batch) return Astro.rewrite('/404');
+
+const seasonId = Number(batch.season_id);
+const staged = await listStaged(db, batchId);
+
+const teams = await db.all(
+  `SELECT id, name FROM teams WHERE season_id = ? ORDER BY sort_order, id`,
+  [seasonId],
+);
+const rounds = await db.all(
+  `SELECT round_no FROM rounds WHERE season_id = ? ORDER BY round_no`,
+  [seasonId],
+);
+
+const committed = String(batch.status) === 'committed';
+const actionable = staged.filter((s) => s.status !== 'error');
+const needsReview = staged.filter((s) => s.status === 'needs_review' || s.status === 'duplicate');
+
+const badge = (s: (typeof staged)[number]) => {
+  if (s.status === 'error') return { text: 'unreadable', cls: 'b-err' };
+  if (s.status === 'duplicate') return { text: 'already have it', cls: 'b-dup' };
+  if (s.analyzed.away.exact && s.analyzed.home.exact) return { text: 'exact match', cls: 'b-ok' };
+  return { text: 'check this', cls: 'b-warn' };
+};
+---
+<Admin title="Review upload">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">🔎 Check before saving</span></div>
+  <Flash />
+
+  {committed ? (
+    <p class="flash flash-ok">This batch has already been saved.</p>
+  ) : (
+    <p class="muted">
+      {staged.length} file{staged.length === 1 ? '' : 's'} read for <strong>{batch.short_label}</strong>.
+      {needsReview.length > 0
+        ? ` ${needsReview.length} need${needsReview.length === 1 ? 's' : ''} a look — anything flagged below is a guess, not a fact.`
+        : ' Everything matched cleanly. Have a glance, then save.'}
+    </p>
+  )}
+
+  <form method="post" action={`/api/admin/uploads/${batchId}/commit`}>
+    <div class="card" style="overflow-x:auto">
+      <table class="grid review">
+        <thead>
+          <tr>
+            <th>Save</th><th>File</th><th>Away</th><th></th><th>Home</th><th></th>
+            <th>Round</th><th>Detected</th>
+          </tr>
+        </thead>
+        <tbody>
+          {staged.map((s) => {
+            const b = badge(s);
+            const a = s.analyzed;
+            return (
+              <tr class={s.status === 'error' ? 'row-err' : undefined}>
+                <td>
+                  <input type="hidden" name="staged" value={s.id} />
+                  <input
+                    type="checkbox"
+                    name={`save-${s.id}`}
+                    checked={s.status === 'ok'}
+                    disabled={s.status === 'error' || committed}
+                  />
+                </td>
+                <td style="text-align:left" class="fname">
+                  {s.filename}
+                  {a.wasDecoded && <span class="tag">decoded</span>}
+                </td>
+                <td>
+                  <select name={`away-${s.id}`} disabled={s.status === 'error' || committed}>
+                    <option value="">— pick a team —</option>
+                    {teams.map((t) => (
+                      <option value={Number(t.id)} selected={Number(t.id) === s.suggestedAwayTeamId}>{t.name}</option>
+                    ))}
+                  </select>
+                </td>
+                <td class="mono-num score">{s.status === 'error' ? '' : a.awayScore}</td>
+                <td>
+                  <select name={`home-${s.id}`} disabled={s.status === 'error' || committed}>
+                    <option value="">— pick a team —</option>
+                    {teams.map((t) => (
+                      <option value={Number(t.id)} selected={Number(t.id) === s.suggestedHomeTeamId}>{t.name}</option>
+                    ))}
+                  </select>
+                </td>
+                <td class="mono-num score">{s.status === 'error' ? '' : a.homeScore}</td>
+                <td>
+                  <select name={`round-${s.id}`} disabled={s.status === 'error' || committed}>
+                    <option value="">unscheduled</option>
+                    {rounds.map((r) => (
+                      <option value={Number(r.round_no)} selected={Number(r.round_no) === s.suggestedRound}>
+                        Round {r.round_no}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td style="text-align:left">
+                  <span class={`badge ${b.cls}`}>{b.text}</span>
+                  {s.error && <div class="note err">{s.error}</div>}
+                  {a.warnings?.map((w) => <div class="note">{w.message}</div>)}
+                  {s.status !== 'error' && (
+                    <div class="note muted">
+                      {new Date(a.playedAt * 1000).toLocaleString()} · {stadiumName(a.stadiumId)} · {a.innings} inn
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    {!committed && actionable.length > 0 && (
+      <div class="actions">
+        <button class="btn" type="submit">Save {actionable.length} game{actionable.length === 1 ? '' : 's'}</button>
+        <a class="muted" href="/admin/upload">Discard and start over</a>
+      </div>
+    )}
+    {committed && <p><a href="/admin/games">See all games →</a></p>}
+  </form>
+</Admin>
+
+<style>
+  .review td, .review th { vertical-align: top; padding: .55rem .5rem; }
+  .review td:first-child, .review th:first-child { padding-left: 1rem; }
+  .review select { font: inherit; font-size: .85rem; max-width: 190px; border: 2px solid var(--line); border-radius: 8px; padding: .2rem .3rem; background: var(--card); }
+  .review .score { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+  .review .fname { font-size: .78rem; word-break: break-all; max-width: 230px; }
+  .row-err { background: #fdeceb; }
+  .badge { display: inline-block; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; border: 2px solid var(--ink); border-radius: 999px; padding: .05rem .5rem; }
+  .b-ok { background: #d8f0d0; }
+  .b-warn { background: var(--gold); }
+  .b-dup { background: #e6e0f5; }
+  .b-err { background: #f7c9c4; }
+  .note { font-size: .74rem; margin-top: .25rem; max-width: 380px; }
+  .note.err { color: var(--dirt); font-weight: 600; }
+  .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .5rem 1.2rem; }
+  .btn:hover { background: var(--grass); border-color: var(--grass); }
+</style>

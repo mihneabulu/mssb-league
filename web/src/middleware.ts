@@ -8,6 +8,7 @@ import { env } from 'cloudflare:workers';
 import type { Actor } from './lib/auth/access.ts';
 import {
   ACCESS_JWT_HEADER,
+  devBypassAllowed,
   isSameOrigin,
   MUTATING_METHODS,
   verifyAccessJwt,
@@ -173,10 +174,9 @@ async function guardAdmin(
     return deny(403, 'Cross-origin request refused.');
   }
 
-  // Local development has no Access in front of it. Both conditions are required, so
-  // this cannot be switched on in a deployed Worker by setting a var alone.
-  // String() because `wrangler types` narrows vars to their literal configured value.
-  if (import.meta.env.DEV && String(env.DEV_BYPASS_AUTH) === 'true') {
+  // Local development has no Access in front of it. See devBypassAllowed: it needs both
+  // an explicit var and a loopback host, so a deployed Worker can never take this path.
+  if (devBypassAllowed(request, env.DEV_BYPASS_AUTH)) {
     return { actor: { email: 'dev@localhost', dev: true } };
   }
 

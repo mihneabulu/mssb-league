@@ -15,9 +15,18 @@ export interface Queryable {
   all(sql: string, params?: unknown[]): Promise<Row[]>;
 }
 
+export type Statement = { sql: string; params?: unknown[] };
+
 /** Reads plus writes, for the admin path and snapshot rebuilds. */
 export interface Executable extends Queryable {
   run(sql: string, params?: unknown[]): Promise<void>;
+  /**
+   * Apply several statements as one unit. D1 allows 50 queries per Worker invocation,
+   * so anything touching many rows must batch rather than loop.
+   */
+  batch(statements: Statement[]): Promise<void>;
+  /** Insert and return the new rowid, which D1 does not give back from run(). */
+  insert(sql: string, params?: unknown[]): Promise<number>;
 }
 
 export const SQL = {

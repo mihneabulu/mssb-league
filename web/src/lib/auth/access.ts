@@ -108,3 +108,31 @@ export function isSameOrigin(request: Request): boolean {
 }
 
 export const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * Whether the local-development auth bypass applies.
+ *
+ * Two independent conditions, and neither can hold on the deployed site:
+ *
+ *  1. DEV_BYPASS_AUTH must be exactly "true". The committed wrangler config sets
+ *     "false", so this differs only in an untracked local .dev.vars.
+ *  2. CF-Connecting-IP must be a loopback address. `wrangler dev` sets it to 127.0.0.1;
+ *     at the edge Cloudflare sets it from the actual connection, and a client on the
+ *     internet cannot present a loopback source address.
+ *
+ * Two earlier attempts at this were wrong and are worth recording. Checking
+ * import.meta.env.DEV fails because `wrangler dev` serves a production build, so the
+ * real runtime could not be exercised locally at all. Checking the URL hostname fails
+ * because `wrangler dev` rewrites the request to the configured custom domain, so a
+ * local request arrives claiming to be mssbleague.com.
+ *
+ * Note this is defence in depth rather than the lock itself: Cloudflare Access
+ * authenticates /admin at the edge, and an unauthenticated request never reaches the
+ * Worker at all.
+ */
+export function devBypassAllowed(request: Request, flag: string | undefined): boolean {
+  if (String(flag) !== 'true') return false;
+  const ip = request.headers.get('cf-connecting-ip');
+  if (!ip) return false;
+  return ip === '::1' || ip === '127.0.0.1' || ip.startsWith('127.');
+}

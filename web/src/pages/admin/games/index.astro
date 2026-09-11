@@ -1,0 +1,155 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import Flash from '../../../components/admin/Flash.astro';
+import { stadiumName } from '../../../lib/mssb/reference.ts';
+
+const { db } = Astro.locals;
+
+const seasons = await db.all(
+  `SELECT id, slug, short_label, is_current FROM seasons ORDER BY start_date DESC, id DESC`,
+);
+const wanted = Astro.url.searchParams.get('season');
+const season =
+  seasons.find((s) => String(s.slug) === wanted) ??
+  seasons.find((s) => Number(s.is_current) === 1) ??
+  seasons[0];
+
+if (!season) {
+  return Astro.rewrite('/404');
+}
+const seasonId = Number(season.id);
+
+const [games, teams, rounds] = await Promise.all([
+  db.all(
+    `SELECT g.id, g.rio_game_id, g.away_score, g.home_score, g.played_at, g.stadium_id,
+            g.notes, g.uploaded_by, g.raw_id,
+            r.round_no, g.away_team_id, g.home_team_id,
+            a.name AS away_name, h.name AS home_name
+     FROM games g
+     JOIN teams a ON a.id = g.away_team_id
+     JOIN teams h ON h.id = g.home_team_id
+     LEFT JOIN rounds r ON r.id = g.round_id
+     WHERE g.season_id = ?
+     ORDER BY g.played_at DESC`,
+    [seasonId],
+  ),
+  db.all(`SELECT id, name FROM teams WHERE season_id = ? ORDER BY sort_order, id`, [seasonId]),
+  db.all(`SELECT round_no FROM rounds WHERE season_id = ? ORDER BY round_no`, [seasonId]),
+]);
+
+const unassigned = games.filter((g) => g.round_no === null).length;
+---
+<Admin title="Games">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">⚾ Games</span></div>
+  <Flash />
+
+  <form method="get" class="seasonpick">
+    <label for="season">Season</label>
+    <select id="season" name="season" onchange="this.form.submit()">
+      {seasons.map((s) => (
+        <option value={String(s.slug)} selected={Number(s.id) === seasonId}>{s.short_label}</option>
+      ))}
+    </select>
+    <noscript><button type="submit">Show</button></noscript>
+  </form>
+
+  <p class="muted">
+    {games.length} game{games.length === 1 ? '' : 's'}.
+    {unassigned > 0 && ` ${unassigned} not attached to a round — those are missing from the schedule page.`}
+  </p>
+
+  {games.length === 0 && (
+    <p class="flash flash-ok">Nothing recorded yet. <a href="/admin/upload">Upload some games →</a></p>
+  )}
+
+  {games.map((g) => (
+    <form class="card gamerow" method="post" action={`/api/admin/games/${g.id}`}>
+      <div class="head">
+        <span class="when muted">{new Date(Number(g.played_at) * 1000).toLocaleString()}</span>
+        <span class="muted">· {stadiumName(Number(g.stadium_id))}</span>
+        <span class="muted">· file {g.rio_game_id}</span>
+        {g.uploaded_by && <span class="muted">· added by {g.uploaded_by}</span>}
+      </div>
+
+      <div class="grid-row">
+        <label class="f">
+          <span class="lbl">Away</span>
+          <select name="away">
+            {teams.map((t) => (
+              <option value={Number(t.id)} selected={Number(t.id) === Number(g.away_team_id)}>{t.name}</option>
+            ))}
+          </select>
+        </label>
+        <span class="score mono-num">{g.away_score}</span>
+        <span class="at muted">@</span>
+        <label class="f">
+          <span class="lbl">Home</span>
+          <select name="home">
+            {teams.map((t) => (
+              <option value={Number(t.id)} selected={Number(t.id) === Number(g.home_team_id)}>{t.name}</option>
+            ))}
+          </select>
+        </label>
+        <span class="score mono-num">{g.home_score}</span>
+        <label class="f">
+          <span class="lbl">Round</span>
+          <select name="round">
+            <option value="">unscheduled</option>
+            {rounds.map((r) => (
+              <option value={Number(r.round_no)} selected={Number(r.round_no) === Number(g.round_no)}>
+                Round {r.round_no}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label class="f grow">
+          <span class="lbl">Note</span>
+          <input type="text" name="notes" value={g.notes === null ? '' : String(g.notes)} placeholder="optional" />
+        </label>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn" type="submit" name="_action" value="save">Save</button>
+        {Number(g.raw_id) > 0 && (
+          <button class="btn ghost" type="submit" name="_action" value="reparse"
+                  title="Re-read the original file — use after a parser fix">Re-read file</button>
+        )}
+        <button class="btn danger" type="submit" name="_action" value="delete"
+                data-confirm={`Delete ${g.away_name} at ${g.home_name}? The original file is kept.`}>Delete</button>
+        <a class="muted" href={`/${season.slug}/games/${g.rio_game_id}`}>View box score →</a>
+      </div>
+    </form>
+  ))}
+</Admin>
+
+<style>
+  .seasonpick { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+  .seasonpick select, .gamerow select, .gamerow input {
+    font: inherit; font-size: .88rem; border: 2px solid var(--line);
+    border-radius: 8px; padding: .25rem .4rem; background: var(--card); color: inherit;
+  }
+  .gamerow { padding: .8rem 1rem; margin-bottom: .9rem; display: flex; flex-direction: column; gap: .6rem; }
+  .head { font-size: .76rem; display: flex; gap: .4rem; flex-wrap: wrap; }
+  .grid-row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; }
+  .f { display: flex; flex-direction: column; gap: .15rem; }
+  .f.grow { flex: 1; min-width: 160px; }
+  .f.grow input { width: 100%; }
+  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  .score { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; padding-bottom: .1rem; }
+  .at { padding-bottom: .35rem; }
+  .row-actions { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .3rem .9rem; }
+  .btn.ghost { background: var(--card); color: var(--ink); }
+  .btn.danger { background: var(--card); color: var(--dirt); border-color: var(--dirt); }
+  .btn.danger:hover { background: var(--dirt); color: #fff; }
+</style>
+
+<script>
+  // Confirmation is an enhancement; without JS the server still refuses nothing, so the
+  // delete button is deliberately a separate named action rather than a bare link.
+  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      if (!confirm(b.dataset.confirm!)) e.preventDefault();
+    });
+  });
+</script>

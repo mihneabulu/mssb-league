@@ -1,0 +1,107 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import Flash from '../../../components/admin/Flash.astro';
+
+const { db } = Astro.locals;
+const seasonRows = await db.all(
+  `SELECT id, slug, short_label FROM seasons WHERE is_current = 1`,
+);
+const season = seasonRows[0] ?? null;
+const recent = await db.all(
+  `SELECT b.id, b.created_at, b.created_by, b.status, COUNT(s.id) AS files
+   FROM upload_batches b LEFT JOIN staged_games s ON s.batch_id = b.id
+   GROUP BY b.id ORDER BY b.created_at DESC LIMIT 5`,
+);
+---
+<Admin title="Upload games">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">📤 Upload games</span></div>
+  <Flash />
+
+  {!season ? (
+    <p class="flash flash-err">
+      No season is marked as current. <a href="/admin/seasons">Set one first.</a>
+    </p>
+  ) : (
+    <>
+      <p class="muted">
+        Drop in the <code>.json</code> files Project Rio saved. Nothing is recorded yet —
+        you get to check and correct every game before it counts, on the next screen.
+        Games go to <strong>{season.short_label}</strong>.
+      </p>
+
+      <form class="card drop" method="post" action="/api/admin/uploads" enctype="multipart/form-data">
+        <label class="dropzone" id="dropzone">
+          <input type="file" name="files" multiple accept=".json,application/json" id="filepick" />
+          <span class="big">Choose files</span>
+          <span class="muted">or drag them here · up to 20 at a time</span>
+          <span class="picked muted" id="picked"></span>
+        </label>
+        <button class="btn" type="submit">Upload and review →</button>
+      </form>
+    </>
+  )}
+
+  {recent.length > 0 && (
+    <>
+      <div class="section-head"><span class="pill">🕓 Recent uploads</span></div>
+      <div class="card" style="overflow:hidden">
+        <table class="grid">
+          <thead><tr><th>When</th><th>By</th><th>Files</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {recent.map((b) => (
+              <tr>
+                <td class="mono-num">{new Date(Number(b.created_at) * 1000).toLocaleString()}</td>
+                <td style="text-align:left">{b.created_by}</td>
+                <td class="mono-num">{b.files}</td>
+                <td>{b.status}</td>
+                <td>{b.status === 'open' && <a href={`/admin/upload/${b.id}`}>Resume →</a>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )}
+</Admin>
+
+<style>
+  .drop { padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
+  .dropzone {
+    width: 100%; border: 3px dashed var(--line); border-radius: var(--radius);
+    padding: 2rem 1rem; text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; gap: .3rem; align-items: center;
+  }
+  .dropzone.over { border-color: var(--grass); background: #f3fbf1; }
+  .dropzone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .big { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; }
+  .btn {
+    font: inherit; font-weight: 700; cursor: pointer;
+    background: var(--ink); color: #fff; border: 2px solid var(--ink);
+    border-radius: 999px; padding: .5rem 1.2rem;
+  }
+  .btn:hover { background: var(--dirt); border-color: var(--dirt); }
+</style>
+
+<script>
+  // Progressive enhancement only: the plain file input works without any of this.
+  const zone = document.getElementById('dropzone');
+  const input = document.getElementById('filepick') as HTMLInputElement | null;
+  const picked = document.getElementById('picked');
+  if (zone && input && picked) {
+    const describe = () => {
+      const n = input.files?.length ?? 0;
+      picked.textContent = n ? `${n} file${n === 1 ? '' : 's'} selected` : '';
+    };
+    input.addEventListener('change', describe);
+    for (const ev of ['dragenter', 'dragover']) {
+      zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add('over'); });
+    }
+    for (const ev of ['dragleave', 'drop']) {
+      zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove('over'); });
+    }
+    zone.addEventListener('drop', (e) => {
+      const dt = (e as DragEvent).dataTransfer;
+      if (dt?.files?.length) { input.files = dt.files; describe(); }
+    });
+  }
+</script>

@@ -1,0 +1,196 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import Flash from '../../../components/admin/Flash.astro';
+import { CHARACTERS, STADIUMS } from '../../../lib/mssb/reference.ts';
+
+const { db } = Astro.locals;
+const slug = Astro.params.slug!;
+
+const seasonRows = await db.all(`SELECT * FROM seasons WHERE slug = ?`, [slug]);
+const season = seasonRows[0];
+if (!season) return Astro.rewrite('/404');
+const seasonId = Number(season.id);
+
+const [teams, roster, rounds, games] = await Promise.all([
+  db.all(
+    `SELECT t.id, t.slug, t.name, t.color, t.stadium_id, t.captain_char_id, t.sort_order,
+            (SELECT COUNT(*) FROM roster_slots r WHERE r.team_id = t.id) AS drafted
+     FROM teams t WHERE t.season_id = ? ORDER BY t.sort_order, t.id`,
+    [seasonId],
+  ),
+  db.all(`SELECT team_id, char_id FROM roster_slots WHERE season_id = ? ORDER BY char_id`, [seasonId]),
+  db.all(`SELECT COUNT(*) AS n FROM rounds WHERE season_id = ?`, [seasonId]),
+  db.all(`SELECT COUNT(*) AS n FROM games WHERE season_id = ?`, [seasonId]),
+]);
+
+const rosterByTeam = new Map<number, number[]>();
+for (const r of roster) {
+  const t = Number(r.team_id);
+  rosterByTeam.set(t, [...(rosterByTeam.get(t) ?? []), Number(r.char_id)]);
+}
+
+const roundCount = Number(rounds[0]?.n ?? 0);
+const gameCount = Number(games[0]?.n ?? 0);
+const undrafted = teams.filter((t) => Number(t.drafted) !== 9);
+const stadiumEntries = Object.entries(STADIUMS);
+
+// The setup order that actually works: teams, then rosters, then schedule.
+const steps = [
+  { done: teams.length > 0, label: `${teams.length} teams` },
+  { done: teams.length > 0 && undrafted.length === 0, label: 'every roster drafted' },
+  { done: roundCount > 0, label: `${roundCount} rounds scheduled` },
+];
+---
+<Admin title={String(season.short_label)}>
+  <div class="section-head" style="margin-top:1.4rem">
+    <span class="pill">⚙️ {season.short_label}</span>
+  </div>
+  <Flash />
+
+  <ol class="steps">
+    {steps.map((s, i) => (
+      <li class={s.done ? 'done' : ''}><span class="n">{s.done ? '✓' : i + 1}</span>{s.label}</li>
+    ))}
+  </ol>
+
+  <form class="card block" method="post" action={`/api/admin/seasons/${slug}`}>
+    <h2>Season details</h2>
+    <div class="fields">
+      <label class="f grow"><span class="lbl">Name (page titles)</span>
+        <input name="name" value={String(season.name)} required /></label>
+      <label class="f"><span class="lbl">Short label (homepage)</span>
+        <input name="shortLabel" value={String(season.short_label)} required /></label>
+      <label class="f"><span class="lbl">First day</span>
+        <input name="startDate" type="date" value={String(season.start_date)} required /></label>
+      <label class="f"><span class="lbl">Rounds</span>
+        <input name="rounds" type="number" min="0" value={String(season.rounds)} /></label>
+      <label class="f"><span class="lbl">Status</span>
+        <select name="status">
+          {['draft', 'active', 'complete', 'archived'].map((v) => (
+            <option value={v} selected={String(season.status) === v}>{v}</option>
+          ))}
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <button class="btn" type="submit">Save details</button>
+      {Number(season.is_current) !== 1 && (
+        <button class="btn ghost" type="submit" name="_action" value="make-current">Make this the current season</button>
+      )}
+      {gameCount === 0 && (
+        <button class="btn danger" type="submit" name="_action" value="delete"
+                data-confirm={`Delete ${season.short_label}? It has no games.`}>Delete season</button>
+      )}
+    </div>
+  </form>
+
+  <div class="section-head"><span class="pill">🧢 Teams</span></div>
+
+  {teams.length === 0 ? (
+    <p class="muted">No teams yet. Add the first one below.</p>
+  ) : (
+    <form class="card block" method="post" action={`/api/admin/seasons/${slug}`}>
+      <p class="muted" style="margin:0">Drag isn't needed — the order here is the order shown when records are tied.</p>
+      <div style="overflow-x:auto">
+        <table class="grid teams">
+          <thead>
+            <tr><th>Name</th><th>Address</th><th>Colour</th><th>Home stadium</th><th>Captain</th><th>Roster</th><th></th></tr>
+          </thead>
+          <tbody>
+            {teams.map((t) => {
+              const drafted = rosterByTeam.get(Number(t.id)) ?? [];
+              return (
+                <tr>
+                  <td><input type="hidden" name="teamId" value={Number(t.id)} />
+                      <input name={`name-${t.id}`} value={String(t.name)} required /></td>
+                  <td><input class="narrow" name={`slug-${t.id}`} value={String(t.slug)} /></td>
+                  <td><input type="color" name={`color-${t.id}`} value={String(t.color)} /></td>
+                  <td>
+                    <select name={`stadium-${t.id}`}>
+                      <option value="">— none —</option>
+                      {stadiumEntries.map(([id, name]) => (
+                        <option value={id} selected={String(t.stadium_id) === id}>{name}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <select name={`captain-${t.id}`}>
+                      <option value="">— none —</option>
+                      {drafted.map((c) => (
+                        <option value={c} selected={Number(t.captain_char_id) === c}>{CHARACTERS[c]}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td class="mono-num">
+                    <a href={`/admin/seasons/${slug}/roster/${t.id}`}
+                       class={Number(t.drafted) === 9 ? 'ok' : 'todo'}>{t.drafted}/9 →</a>
+                  </td>
+                  <td>
+                    {/* The button carries the id itself: a submit button sends only its
+                        own name/value, so this needs no hidden field and cannot pick the
+                        wrong row. */}
+                    <button class="linkish danger" type="submit" name="removeTeam" value={Number(t.id)}
+                            formnovalidate data-confirm={`Remove ${t.name}? This cannot be undone.`}>remove</button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <button class="btn" type="submit" name="_action" value="save-teams">Save teams</button>
+    </form>
+  )}
+
+  <form class="card block" method="post" action={`/api/admin/seasons/${slug}`}>
+    <div class="row">
+      <label class="f grow"><span class="lbl">Add a team</span>
+        <input name="teamName" placeholder="e.g. Flame Imp" required /></label>
+      <button class="btn" type="submit" name="_action" value="add-team">Add team</button>
+    </div>
+  </form>
+
+  <div class="section-head"><span class="pill">🗓 Schedule</span></div>
+  <p class="muted">
+    {roundCount > 0
+      ? `${roundCount} rounds set up.`
+      : 'No schedule yet — generate one once every team has a roster.'}
+  </p>
+  <p><a class="btn ghost" href={`/admin/seasons/${slug}/schedule`}>Open the schedule editor →</a></p>
+</Admin>
+
+<style>
+  .steps { display: flex; gap: 1.2rem; list-style: none; padding: 0; margin: 0 0 1rem; flex-wrap: wrap; }
+  .steps li { display: flex; align-items: center; gap: .45rem; font-weight: 600; color: var(--ink-soft); }
+  .steps li.done { color: var(--ink); }
+  .steps .n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); font-size: .75rem; }
+  .steps li.done .n { background: var(--grass); border-color: var(--grass); color: #fff; }
+  .block { padding: 1rem 1.1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: .8rem; align-items: flex-start; }
+  .block h2 { font-family: var(--font-display); font-size: 1.1rem; margin: 0; }
+  .fields { display: flex; gap: .8rem; flex-wrap: wrap; width: 100%; }
+  .row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; width: 100%; }
+  .f { display: flex; flex-direction: column; gap: .15rem; }
+  .f.grow { flex: 1; min-width: 220px; }
+  .f.grow input { width: 100%; }
+  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  input, select { font: inherit; font-size: .88rem; border: 2px solid var(--line); border-radius: 8px; padding: .28rem .4rem; background: var(--card); color: inherit; }
+  input[type=color] { padding: 0; width: 44px; height: 30px; }
+  .narrow { width: 120px; }
+  .teams td, .teams th { padding: .4rem .45rem; }
+  .teams td:first-child, .teams th:first-child { padding-left: 1rem; }
+  .ok { color: var(--grass); font-weight: 700; text-decoration: none; }
+  .todo { color: var(--dirt); font-weight: 700; text-decoration: none; }
+  .btn { font: inherit; font-size: .9rem; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .4rem 1rem; text-decoration: none; display: inline-block; }
+  .btn.ghost { background: var(--card); color: var(--ink); }
+  .btn.danger { background: var(--card); color: var(--dirt); border-color: var(--dirt); }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; font-size: .8rem; text-decoration: underline; cursor: pointer; }
+  .linkish.danger { color: var(--dirt); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      if (!confirm(b.dataset.confirm!)) e.preventDefault();
+    });
+  });
+</script>

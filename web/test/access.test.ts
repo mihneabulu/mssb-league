@@ -10,7 +10,7 @@ import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import type { KeyObject } from 'node:crypto';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { isSameOrigin, verifyAccessJwt } from '../src/lib/auth/access.ts';
+import { devBypassAllowed, isSameOrigin, verifyAccessJwt } from '../src/lib/auth/access.ts';
 
 const AUD = 'abc123def456';
 const TEAM = 'testteam.cloudflareaccess.com';
@@ -193,5 +193,37 @@ describe('isSameOrigin', () => {
 
   it('refuses a malformed Referer', () => {
     expect(isSameOrigin(req({ referer: 'not a url' }))).toBe(false);
+  });
+});
+
+describe('devBypassAllowed', () => {
+  const req = (ip?: string, url = 'https://mssbleague.com/admin') =>
+    new Request(url, { headers: ip ? { 'cf-connecting-ip': ip } : {} });
+
+  it('allows when the flag is set and the caller is loopback', () => {
+    expect(devBypassAllowed(req('127.0.0.1'), 'true')).toBe(true);
+    expect(devBypassAllowed(req('::1'), 'true')).toBe(true);
+  });
+
+  it('refuses a real visitor even with the flag set', () => {
+    // The case that matters: on the deployed site CF-Connecting-IP is the actual client.
+    expect(devBypassAllowed(req('203.0.113.7'), 'true')).toBe(false);
+    expect(devBypassAllowed(req('2001:db8::1'), 'true')).toBe(false);
+  });
+
+  it('refuses when the header is missing entirely', () => {
+    expect(devBypassAllowed(req(undefined), 'true')).toBe(false);
+  });
+
+  it('refuses loopback when the flag is not exactly "true"', () => {
+    expect(devBypassAllowed(req('127.0.0.1'), 'false')).toBe(false);
+    expect(devBypassAllowed(req('127.0.0.1'), undefined)).toBe(false);
+    expect(devBypassAllowed(req('127.0.0.1'), 'TRUE')).toBe(false);
+    expect(devBypassAllowed(req('127.0.0.1'), '1')).toBe(false);
+  });
+
+  it('is not fooled by an address that merely starts with the digits', () => {
+    expect(devBypassAllowed(req('12.7.0.1'), 'true')).toBe(false);
+    expect(devBypassAllowed(req('1270.0.0.1'), 'true')).toBe(false);
   });
 });

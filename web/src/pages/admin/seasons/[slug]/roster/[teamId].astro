@@ -1,0 +1,163 @@
+---
+import Admin from '../../../../../layouts/Admin.astro';
+import Flash from '../../../../../components/admin/Flash.astro';
+import { rosterOwnership } from '../../../../../lib/db/admin.ts';
+import { portrait } from '../../../../../lib/format.ts';
+import { CHARACTERS } from '../../../../../lib/mssb/reference.ts';
+
+// The draft board. Every other admin screen is a table of inputs; this one is a
+// stateful multi-select with cross-team exclusivity, so it gets a purpose-built grid
+// rather than a list of checkboxes. No drag and drop: 54 clickable cells is simpler to
+// build, simpler to use on a phone, and works without JavaScript.
+const { db } = Astro.locals;
+const slug = Astro.params.slug!;
+const teamId = Number(Astro.params.teamId);
+
+const seasonRows = await db.all(`SELECT id, slug, short_label FROM seasons WHERE slug = ?`, [slug]);
+const season = seasonRows[0];
+if (!season) return Astro.rewrite('/404');
+const seasonId = Number(season.id);
+
+const teamRows = await db.all(
+  `SELECT id, name, color, captain_char_id, updated_at FROM teams WHERE id = ? AND season_id = ?`,
+  [teamId, seasonId],
+);
+const team = teamRows[0];
+if (!team) return Astro.rewrite('/404');
+
+const owners = await rosterOwnership(db, seasonId);
+const ownerByChar = new Map(owners.map((o) => [o.charId, o]));
+const mine = new Set(owners.filter((o) => o.teamId === teamId).map((o) => o.charId));
+const captain = team.captain_char_id === null ? null : Number(team.captain_char_id);
+
+const cells = CHARACTERS.map((name, charId) => {
+  const owner = ownerByChar.get(charId);
+  return {
+    charId,
+    name,
+    mine: mine.has(charId),
+    takenBy: owner && owner.teamId !== teamId ? owner : null,
+  };
+});
+const available = cells.filter((c) => !c.takenBy).length;
+---
+<Admin title={`Draft · ${team.name}`}>
+  <p class="crumb"><a href={`/admin/seasons/${slug}`}>← {season.short_label} setup</a></p>
+  <div class="section-head">
+    <span class="pill" style={`background:${team.color}`}>🧢 {team.name} draft</span>
+  </div>
+  <Flash />
+
+  <form method="post" action={`/api/admin/seasons/${slug}/roster`} id="rosterform">
+    <input type="hidden" name="teamId" value={teamId} />
+    {/* Optimistic concurrency: the disabled cells below are a snapshot, and two people
+        drafting at once would otherwise silently overwrite each other. */}
+    <input type="hidden" name="expectedUpdatedAt" value={String(team.updated_at)} />
+
+    <div class="bar card">
+      <span class="count"><strong id="count">{mine.size}</strong> of 9 picked</span>
+      <span class="muted">{available} characters still available this season</span>
+      <label class="capwrap">
+        <span class="lbl">Captain</span>
+        <select name="captain" id="captain">
+          <option value="">— none —</option>
+          {cells.filter((c) => c.mine).map((c) => (
+            <option value={c.charId} selected={captain === c.charId}>{c.name}</option>
+          ))}
+        </select>
+      </label>
+      <button class="btn" type="submit">Save roster</button>
+    </div>
+
+    <div class="grid-chars">
+      {cells.map((c) => (
+        <label
+          class={`cell ${c.mine ? 'picked' : ''} ${c.takenBy ? 'taken' : ''}`}
+          style={c.takenBy ? `--owner:${c.takenBy.color}` : undefined}
+          title={c.takenBy ? `Already drafted by ${c.takenBy.teamName}` : c.name}
+        >
+          <input
+            type="checkbox"
+            name="chars"
+            value={c.charId}
+            checked={c.mine}
+            disabled={!!c.takenBy}
+            data-name={c.name}
+          />
+          <img src={portrait(c.charId)} alt="" width={44} height={44} loading="lazy" />
+          <span class="cname">{c.name}</span>
+          {c.takenBy && <span class="owner">{c.takenBy.teamName}</span>}
+        </label>
+      ))}
+    </div>
+  </form>
+</Admin>
+
+<style>
+  .crumb { margin: 1.2rem 0 .4rem; font-size: .85rem; }
+  .bar { padding: .7rem 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; position: sticky; top: 8px; z-index: 5; }
+  .count { font-family: var(--font-display); font-size: 1.05rem; }
+  .capwrap { display: flex; align-items: center; gap: .4rem; margin-left: auto; }
+  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  select { font: inherit; font-size: .88rem; border: 2px solid var(--line); border-radius: 8px; padding: .25rem .4rem; background: var(--card); color: inherit; }
+  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .4rem 1.1rem; }
+  .btn:hover { background: var(--grass); border-color: var(--grass); }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .grid-chars { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .55rem; }
+  .cell {
+    display: flex; flex-direction: column; align-items: center; gap: .2rem;
+    padding: .5rem .3rem; border: 3px solid var(--line); border-radius: 12px;
+    background: var(--card); cursor: pointer; text-align: center;
+  }
+  .cell input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .cell:hover { border-color: var(--ink-soft); }
+  .cell.picked { border-color: var(--grass); background: #f1fbee; box-shadow: var(--shadow-sm); }
+  .cell.taken { opacity: .5; cursor: not-allowed; border-style: dashed; border-color: var(--owner, var(--line)); }
+  .cell.taken:hover { border-color: var(--owner, var(--line)); }
+  .cname { font-size: .74rem; font-weight: 700; line-height: 1.1; }
+  .owner { font-size: .62rem; color: var(--ink-soft); }
+  img { border-radius: 8px; }
+</style>
+
+<script>
+  // Enhancement only — with JS off the form still posts and the server validates.
+  const form = document.getElementById('rosterform') as HTMLFormElement | null;
+  const count = document.getElementById('count');
+  const captain = document.getElementById('captain') as HTMLSelectElement | null;
+  if (form && count && captain) {
+    const boxes = () =>
+      Array.from(form.querySelectorAll<HTMLInputElement>('input[name="chars"]'));
+
+    const sync = () => {
+      const picked = boxes().filter((b) => b.checked);
+      count.textContent = String(picked.length);
+
+      // Keep the captain list in step with what is actually selected.
+      const previous = captain.value;
+      captain.innerHTML = '<option value="">— none —</option>';
+      for (const b of picked) {
+        const opt = document.createElement('option');
+        opt.value = b.value;
+        opt.textContent = b.dataset.name ?? b.value;
+        if (b.value === previous) opt.selected = true;
+        captain.appendChild(opt);
+      }
+
+      // Nine is the roster size; stop the eleventh click rather than failing on save.
+      for (const b of boxes()) {
+        if (!b.disabled) b.toggleAttribute('data-full', picked.length >= 9 && !b.checked);
+      }
+      count.parentElement?.classList.toggle('over', picked.length > 9);
+    };
+
+    form.addEventListener('change', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.name === 'chars' && t.checked && boxes().filter((b) => b.checked).length > 9) {
+        t.checked = false;
+      }
+      sync();
+    });
+    sync();
+  }
+</script>

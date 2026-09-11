@@ -1,0 +1,137 @@
+---
+import Admin from '../../../../layouts/Admin.astro';
+import Flash from '../../../../components/admin/Flash.astro';
+
+const { db } = Astro.locals;
+const slug = Astro.params.slug!;
+
+const seasonRows = await db.all(`SELECT id, slug, short_label FROM seasons WHERE slug = ?`, [slug]);
+const season = seasonRows[0];
+if (!season) return Astro.rewrite('/404');
+const seasonId = Number(season.id);
+
+const [teams, rounds, matchups, played] = await Promise.all([
+  db.all(`SELECT id, name, color FROM teams WHERE season_id = ? ORDER BY sort_order, id`, [seasonId]),
+  db.all(`SELECT id, round_no FROM rounds WHERE season_id = ? ORDER BY round_no`, [seasonId]),
+  db.all(
+    `SELECT m.round_id, m.slot, m.away_team_id, m.home_team_id
+     FROM matchups m WHERE m.season_id = ? ORDER BY m.round_id, m.slot`,
+    [seasonId],
+  ),
+  db.all(
+    `SELECT r.round_no, COUNT(*) AS n FROM games g JOIN rounds r ON r.id = g.round_id
+     WHERE g.season_id = ? GROUP BY r.round_no`,
+    [seasonId],
+  ),
+]);
+
+const byRound = new Map<number, { away: number; home: number }[]>();
+for (const m of matchups) {
+  const id = Number(m.round_id);
+  byRound.set(id, [
+    ...(byRound.get(id) ?? []),
+    { away: Number(m.away_team_id), home: Number(m.home_team_id) },
+  ]);
+}
+const playedByRound = new Map(played.map((p) => [Number(p.round_no), Number(p.n)]));
+const perRound = Math.floor(teams.length / 2);
+const expectedRounds = teams.length > 1 ? (teams.length % 2 === 0 ? teams.length - 1 : teams.length) * 2 : 0;
+---
+<Admin title="Schedule">
+  <p class="crumb"><a href={`/admin/seasons/${slug}`}>← {season.short_label} setup</a></p>
+  <div class="section-head"><span class="pill">🗓 Schedule</span></div>
+  <Flash />
+
+  {teams.length < 2 ? (
+    <p class="flash flash-err">Add at least two teams before building a schedule.</p>
+  ) : (
+    <>
+      <form class="card block" method="post" action={`/api/admin/seasons/${slug}/schedule`}>
+        <h2>Generate</h2>
+        <p class="muted" style="margin:0">
+          Builds a double round-robin from the {teams.length} teams: every pair meets twice,
+          once at each home stadium. That is {expectedRounds} rounds of {perRound}
+          {teams.length % 2 === 1 ? ' (one team rests each round)' : ''}.
+          You can adjust any matchup afterwards.
+        </p>
+        <button class="btn" type="submit" name="_action" value="generate"
+                data-confirm={rounds.length > 0
+                  ? 'Replace the current schedule? Games already recorded keep their round.'
+                  : undefined}>
+          {rounds.length > 0 ? 'Regenerate schedule' : 'Generate schedule'}
+        </button>
+      </form>
+
+      {rounds.length === 0 ? (
+        <p class="muted">No rounds yet.</p>
+      ) : (
+        <form method="post" action={`/api/admin/seasons/${slug}/schedule`}>
+          <div class="rounds">
+            {rounds.map((r) => {
+              const roundNo = Number(r.round_no);
+              const list = byRound.get(Number(r.id)) ?? [];
+              const gamesIn = playedByRound.get(roundNo) ?? 0;
+              const slots = Math.max(list.length, perRound);
+              return (
+                <section class="card round">
+                  <header>
+                    <span class="rno">Round {roundNo}</span>
+                    {gamesIn > 0 && <span class="tag" style="background:var(--grass);color:#fff">{gamesIn} played</span>}
+                  </header>
+                  {Array.from({ length: slots }, (_, slot) => {
+                    const m = list[slot];
+                    return (
+                      <div class="mu">
+                        <select name={`m-${roundNo}-${slot}-away`}>
+                          <option value="">—</option>
+                          {teams.map((t) => (
+                            <option value={Number(t.id)} selected={!!m && Number(t.id) === m.away}>{t.name}</option>
+                          ))}
+                        </select>
+                        <span class="at muted">at</span>
+                        <select name={`m-${roundNo}-${slot}-home`}>
+                          <option value="">—</option>
+                          {teams.map((t) => (
+                            <option value={Number(t.id)} selected={!!m && Number(t.id) === m.home}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </section>
+              );
+            })}
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit" name="_action" value="save">Save schedule</button>
+            <span class="muted">Leave both boxes empty to drop a fixture.</span>
+          </div>
+        </form>
+      )}
+    </>
+  )}
+</Admin>
+
+<style>
+  .crumb { margin: 1.2rem 0 .4rem; font-size: .85rem; }
+  .block { padding: 1rem 1.1rem; margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: .7rem; align-items: flex-start; }
+  .block h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0; }
+  .rounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem; }
+  .round { padding: .8rem .9rem; display: flex; flex-direction: column; gap: .45rem; }
+  .round header { display: flex; align-items: center; justify-content: space-between; }
+  .rno { font-family: var(--font-display); font-weight: 700; }
+  .mu { display: flex; align-items: center; gap: .4rem; }
+  .mu select { flex: 1; min-width: 0; font: inherit; font-size: .82rem; border: 2px solid var(--line); border-radius: 8px; padding: .22rem .3rem; background: var(--card); color: inherit; }
+  .at { font-size: .74rem; }
+  .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .45rem 1.1rem; }
+  .btn:hover { background: var(--grass); border-color: var(--grass); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      if (!confirm(b.dataset.confirm!)) e.preventDefault();
+    });
+  });
+</script>
