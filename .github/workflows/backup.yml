@@ -129,8 +129,17 @@ jobs:
 
           def get(url):
               req = urllib.request.Request(url, headers=headers)
-              with urllib.request.urlopen(req, timeout=120) as r:
-                  return r.read()
+              try:
+                  with urllib.request.urlopen(req, timeout=120) as r:
+                      return r.read()
+              except urllib.error.HTTPError as e:
+                  body = e.read()[:300].decode('utf-8', 'replace')
+                  shown = url.replace(base, '<league>')
+                  print(f'{shown} -> HTTP {e.code}')
+                  print(f'  content-type: {e.headers.get("content-type")}')
+                  print(f'  location:     {e.headers.get("location")}')
+                  print(f'  body:         {body!r}')
+                  raise
 
           manifest = json.loads(get(f'{base}/api/admin/export/raw'))
           files = manifest.get('files')
