@@ -177,7 +177,7 @@ async function guardAdmin(
   // Local development has no Access in front of it. See devBypassAllowed: it needs both
   // an explicit var and a loopback host, so a deployed Worker can never take this path.
   if (devBypassAllowed(request, env.DEV_BYPASS_AUTH)) {
-    return { actor: { email: 'dev@localhost', dev: true } };
+    return { actor: { email: 'dev@localhost', kind: 'user', dev: true } };
   }
 
   const result = await verifyAccessJwt(request.headers.get(ACCESS_JWT_HEADER), {
@@ -188,6 +188,13 @@ async function guardAdmin(
   if (!result.ok) {
     console.warn(`admin request refused: ${result.reason}`);
     return deny(403, 'Not authorized. Sign in through Cloudflare Access.');
+  }
+
+  // A service token is for automation — the nightly backup reads the export endpoint —
+  // and nothing automated needs to change the league. Keeping machines read-only means a
+  // leaked token cannot delete a season, only read one.
+  if (result.actor.kind === 'service' && MUTATING_METHODS.has(request.method)) {
+    return deny(403, 'Service tokens are read-only.');
   }
 
   return { actor: result.actor };

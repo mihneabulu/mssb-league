@@ -74,9 +74,32 @@ describe('verifyAccessJwt — accepting a real token', () => {
     expect(result.ok, 'reason' in result ? result.reason : '').toBe(true);
     if (result.ok) {
       expect(result.actor.email).toBe('manager@example.com');
+      expect(result.actor.kind).toBe('user');
       expect(result.actor.userId).toBe('user-1');
       expect(result.actor.dev).toBeUndefined();
     }
+  });
+
+  it('accepts a service token, which carries common_name instead of email', async () => {
+    stubJwks(publicJwk);
+    // The real shape Cloudflare sends for a service token: no email, empty sub.
+    const token = await sign({ common_name: 'e367826f93b8d71185e03fe518aff3b4.access', sub: '', type: 'app' });
+
+    const result = await verifyAccessJwt(token, { teamDomain: TEAM, aud: AUD });
+    expect(result.ok, 'reason' in result ? result.reason : '').toBe(true);
+    if (result.ok) {
+      expect(result.actor.kind).toBe('service');
+      // Labelled so it can never be mistaken for a person in the audit log.
+      expect(result.actor.email).toBe('service-token:e367826f93b8d71185e03fe518aff3b4.access');
+      expect(result.actor.email).not.toMatch(/^[^:]+@/);
+    }
+  });
+
+  it('still verifies the signature of a service token', async () => {
+    stubJwks(publicJwk);
+    const token = await sign({ common_name: 'x.access', sub: '' }, { key: otherPrivateKey });
+    const result = await verifyAccessJwt(token, { teamDomain: TEAM, aud: AUD });
+    expect(result.ok).toBe(false);
   });
 });
 
@@ -139,10 +162,11 @@ describe('verifyAccessJwt — rejecting everything else', () => {
     expect(await reject(token)).toMatch(/invalid/i);
   });
 
-  it('rejects a valid signature with no email claim', async () => {
+  it('rejects a valid signature that identifies nobody at all', async () => {
     stubJwks(publicJwk);
+    // Neither email nor common_name: not a person, not a service.
     const token = await sign({ sub: 'user-1' });
-    expect(await reject(token)).toMatch(/no email/i);
+    expect(await reject(token)).toMatch(/neither a person nor a service/i);
   });
 
   it('refuses to verify at all while the config is still placeholder', async () => {

@@ -10,7 +10,13 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 export type Actor = {
+  /** Who to show and record. For a service token this is a label, not a mailbox. */
   email: string;
+  /**
+   * A person who logged in, or a machine presenting a service token. Machines are
+   * read-only: see MUTATING_METHODS in the middleware.
+   */
+  kind: 'user' | 'service';
   /** Access's stable user id, when present. */
   userId?: string;
   /** True when this is the local dev bypass rather than a real Access login. */
@@ -69,16 +75,35 @@ export async function verifyAccessJwt(
       audience: config.aud,
     });
 
+    // Two shapes come through this header. A person who logged in via the identity
+    // provider gets an `email` claim. A service token gets no email at all — it carries
+    // `common_name` (the token's client id) and an empty `sub`. Requiring email rejected
+    // every machine request, which is what broke the backup job.
     const email = typeof payload.email === 'string' ? payload.email : null;
-    if (!email) return { ok: false, reason: 'Access token carries no email claim' };
+    if (email) {
+      return {
+        ok: true,
+        actor: {
+          email,
+          kind: 'user',
+          userId: typeof payload.sub === 'string' && payload.sub ? payload.sub : undefined,
+        },
+      };
+    }
 
-    return {
-      ok: true,
-      actor: {
-        email,
-        userId: typeof payload.sub === 'string' ? payload.sub : undefined,
-      },
-    };
+    const commonName = typeof payload.common_name === 'string' ? payload.common_name : null;
+    if (commonName) {
+      return {
+        ok: true,
+        actor: {
+          // Prefixed so it can never be confused with a person in the audit log.
+          email: `service-token:${commonName}`,
+          kind: 'service',
+        },
+      };
+    }
+
+    return { ok: false, reason: 'Access token identifies neither a person nor a service' };
   } catch (e) {
     return { ok: false, reason: `invalid Access token: ${(e as Error).message}` };
   }
