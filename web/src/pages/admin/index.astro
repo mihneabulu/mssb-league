@@ -1,0 +1,112 @@
+---
+import Admin from '../../layouts/Admin.astro';
+
+// Read-only on purpose: this exists first to prove the Access login works end to end
+// before any editing surface is built on top of it.
+const { db, actor } = Astro.locals;
+
+const [seasons, counts, recent] = await Promise.all([
+  db.all(`SELECT slug, short_label, status, is_current, start_date, rounds FROM seasons
+          ORDER BY start_date DESC, id DESC`),
+  db.all(`SELECT
+            (SELECT COUNT(*) FROM seasons) AS seasons,
+            (SELECT COUNT(*) FROM teams) AS teams,
+            (SELECT COUNT(*) FROM games) AS games,
+            (SELECT COUNT(*) FROM game_raw) AS raws,
+            (SELECT COALESCE(SUM(size_gz), 0) FROM game_raw) AS raw_bytes`),
+  db.all(`SELECT at, actor, action, entity, detail FROM audit_log ORDER BY at DESC LIMIT 10`),
+]);
+
+const c = counts[0] ?? {};
+const kb = (n: unknown) => `${(Number(n) / 1024).toFixed(0)} KB`;
+
+const currentSeason = seasons.find((s) => Number(s.is_current) === 1);
+
+// Games still waiting on a scheduled round — the one bit of data hygiene worth showing.
+const unassigned = await db.all(
+  `SELECT COUNT(*) AS n FROM games WHERE round_id IS NULL`,
+);
+---
+<Admin title="Overview">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">⚙️ Overview</span></div>
+
+  <p class="muted">
+    Signed in as <strong>{actor.email}</strong>
+    {actor.dev
+      ? ' — local development, Cloudflare Access was bypassed.'
+      : ' — authenticated by Cloudflare Access.'}
+  </p>
+
+  <div class="stat-grid">
+    <div class="card stat"><span class="n">{c.seasons}</span><span class="l">seasons</span></div>
+    <div class="card stat"><span class="n">{c.teams}</span><span class="l">teams</span></div>
+    <div class="card stat"><span class="n">{c.games}</span><span class="l">games</span></div>
+    <div class="card stat"><span class="n">{c.raws}</span><span class="l">files archived</span></div>
+    <div class="card stat"><span class="n">{kb(c.raw_bytes)}</span><span class="l">upload storage</span></div>
+  </div>
+
+  {Number(unassigned[0]?.n) > 0 && (
+    <p class="warn card">
+      {unassigned[0].n} game(s) have no scheduled round. They will not appear on the schedule page.
+    </p>
+  )}
+
+  <div class="section-head"><span class="pill">📅 Seasons</span></div>
+  <div class="card" style="overflow:hidden">
+    <table class="grid">
+      <thead>
+        <tr><th>Season</th><th>Slug</th><th>Status</th><th>Starts</th><th>Rounds</th><th></th></tr>
+      </thead>
+      <tbody>
+        {seasons.map((s) => (
+          <tr>
+            <td style="text-align:left"><strong>{s.short_label}</strong></td>
+            <td class="mono-num">{s.slug}</td>
+            <td>
+              {s.status}
+              {Number(s.is_current) === 1 && <span class="tag" style="background:var(--gold)">current</span>}
+            </td>
+            <td class="mono-num">{s.start_date}</td>
+            <td class="mono-num">{s.rounds}</td>
+            <td><a href={`/${s.slug}`}>View →</a></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head"><span class="pill">🧾 Recent activity</span></div>
+  {recent.length === 0
+    ? <p class="muted">Nothing yet — every change made here will be logged with who made it.</p>
+    : (
+      <div class="card" style="overflow:hidden">
+        <table class="grid">
+          <thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th></tr></thead>
+          <tbody>
+            {recent.map((r) => (
+              <tr>
+                <td class="mono-num">{new Date(Number(r.at) * 1000).toLocaleString()}</td>
+                <td style="text-align:left">{r.actor}</td>
+                <td>{r.action}</td>
+                <td style="text-align:left" class="muted">{r.entity} {r.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+  {currentSeason && (
+    <p class="muted" style="margin-top:1.5rem">
+      Uploads will go to <strong>{currentSeason.short_label}</strong>, the current season.
+    </p>
+  )}
+</Admin>
+
+<style>
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
+  .stat { padding: .9rem; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+  .stat .n { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; }
+  .stat .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  .warn { padding: .8rem 1rem; border-left: 8px solid var(--dirt); margin-top: 1rem; font-weight: 600; }
+</style>
