@@ -4,19 +4,33 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
+    "dev": "wrangler types && astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro build && wrangler dev",
     "lint": "oxlint src",
     "lint:fix": "oxlint --fix src",
     "format": "oxfmt src",
-    "format:check": "oxfmt --check src"
+    "format:check": "oxfmt --check src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify:parity": "vitest run test/parity.test.ts",
+    "typecheck": "wrangler types && tsc --noEmit",
+    "import:legacy": "node --experimental-strip-types scripts/import-legacy.ts",
+    "db:migrate": "wrangler d1 migrations apply mssb-league --local",
+    "db:seed": "wrangler d1 execute mssb-league --local --file=./migrations/seed/season-1.sql",
+    "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
-    "astro": "^7.0.7"
+    "astro": "^7.3.2",
+    "jose": "^6.2.12"
   },
   "devDependencies": {
+    "@astrojs/cloudflare": "^14.3.1",
+    "@types/node": "^22.20.2",
     "oxfmt": "^0.58.0",
-    "oxlint": "^1.73.0"
+    "oxlint": "^1.73.0",
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.7",
+    "wrangler": "^4.131.0"
   }
 }
