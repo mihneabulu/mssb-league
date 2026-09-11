@@ -98,11 +98,7 @@ const available = cells.filter((c) => !c.takenBy).length;
   .bar { padding: .7rem 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; position: sticky; top: 8px; z-index: 5; }
   .count { font-family: var(--font-display); font-size: 1.05rem; }
   .capwrap { display: flex; align-items: center; gap: .4rem; margin-left: auto; }
-  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
   select { font: inherit; font-size: .88rem; border: 2px solid var(--line); border-radius: 8px; padding: .25rem .4rem; background: var(--card); color: inherit; }
-  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .4rem 1.1rem; }
-  .btn:hover { background: var(--grass); border-color: var(--grass); }
-  .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
   .grid-chars { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .55rem; }
   .cell {

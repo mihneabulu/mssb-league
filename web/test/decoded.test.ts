@@ -9,7 +9,7 @@
 // from it, feed that through the ordinary upload path, and require the result to be
 // identical to analyzing the raw file.
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -17,7 +17,7 @@ import { parseCtimeAtOffset, RECORDING_TZ_OFFSET_MINUTES } from '../src/lib/mssb
 import { analyzeUpload } from '../src/lib/mssb/ingest.ts';
 import { CHARACTERS, STADIUMS } from '../src/lib/mssb/reference.ts';
 import type { RioGame } from '../src/lib/mssb/rio.ts';
-import { legacyContext, REPO_ROOT } from './legacy-context.ts';
+import { legacyContext, REPO_ROOT, walkJson } from './legacy-context.ts';
 
 /** Rio's decoder collapses these colour variants onto one name. */
 const DECODER_NAME = (charId: number): string => (charId === 24 ? 'Noki(G)' : CHARACTERS[charId]);
@@ -52,16 +52,6 @@ function toDecoded(raw: RioGame): RioGame {
     entry.CharID = DECODER_NAME(Number(entry.CharID));
   }
   return out;
-}
-
-function walkJson(dir: string): string[] {
-  const out: string[] = [];
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) out.push(...walkJson(full));
-    else if (name.endsWith('.json')) out.push(full);
-  }
-  return out.sort();
 }
 
 const files = walkJson(join(REPO_ROOT, 'results'));

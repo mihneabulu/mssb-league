@@ -165,14 +165,6 @@ const steps = [
   .steps li.done { color: var(--ink); }
   .steps .n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); font-size: .75rem; }
   .steps li.done .n { background: var(--grass); border-color: var(--grass); color: #fff; }
-  .block { padding: 1rem 1.1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: .8rem; align-items: flex-start; }
-  .block h2 { font-family: var(--font-display); font-size: 1.1rem; margin: 0; }
-  .fields { display: flex; gap: .8rem; flex-wrap: wrap; width: 100%; }
-  .row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; width: 100%; }
-  .f { display: flex; flex-direction: column; gap: .15rem; }
-  .f.grow { flex: 1; min-width: 220px; }
-  .f.grow input { width: 100%; }
-  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
   input, select { font: inherit; font-size: .88rem; border: 2px solid var(--line); border-radius: 8px; padding: .28rem .4rem; background: var(--card); color: inherit; }
   input[type=color] { padding: 0; width: 44px; height: 30px; }
   .narrow { width: 120px; }
@@ -180,17 +172,5 @@ const steps = [
   .teams td:first-child, .teams th:first-child { padding-left: 1rem; }
   .ok { color: var(--grass); font-weight: 700; text-decoration: none; }
   .todo { color: var(--dirt); font-weight: 700; text-decoration: none; }
-  .btn { font: inherit; font-size: .9rem; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .4rem 1rem; text-decoration: none; display: inline-block; }
-  .btn.ghost { background: var(--card); color: var(--ink); }
-  .btn.danger { background: var(--card); color: var(--dirt); border-color: var(--dirt); }
-  .linkish { background: none; border: 0; padding: 0; font: inherit; font-size: .8rem; text-decoration: underline; cursor: pointer; }
-  .linkish.danger { color: var(--dirt); }
 </style>
 
-<script>
-  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
-    b.addEventListener('click', (e) => {
-      if (!confirm(b.dataset.confirm!)) e.preventDefault();
-    });
-  });
-</script>

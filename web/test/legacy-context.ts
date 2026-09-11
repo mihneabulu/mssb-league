@@ -1,6 +1,6 @@
 // Shared fixtures for tests that need a SeasonContext built from the Season 1 corpus.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,6 +22,17 @@ export type LegacyTeams = {
   }[];
   schedule: { round: number; matchups: [string, string][] }[];
 };
+
+/** Every .json under a directory, recursively, in a stable order. */
+export function walkJson(dir: string): string[] {
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) out.push(...walkJson(full));
+    else if (name.endsWith('.json')) out.push(full);
+  }
+  return out.sort();
+}
 
 export function readLegacyTeams(): LegacyTeams {
   return JSON.parse(readFileSync(join(REPO_ROOT, 'teams.json'), 'utf8')) as LegacyTeams;

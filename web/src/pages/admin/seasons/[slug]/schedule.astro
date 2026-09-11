@@ -114,8 +114,6 @@ const expectedRounds = teams.length > 1 ? (teams.length % 2 === 0 ? teams.length
 
 <style>
   .crumb { margin: 1.2rem 0 .4rem; font-size: .85rem; }
-  .block { padding: 1rem 1.1rem; margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: .7rem; align-items: flex-start; }
-  .block h2 { font-family: var(--font-display); font-size: 1.05rem; margin: 0; }
   .rounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem; }
   .round { padding: .8rem .9rem; display: flex; flex-direction: column; gap: .45rem; }
   .round header { display: flex; align-items: center; justify-content: space-between; }
@@ -124,14 +122,5 @@ const expectedRounds = teams.length > 1 ? (teams.length % 2 === 0 ? teams.length
   .mu select { flex: 1; min-width: 0; font: inherit; font-size: .82rem; border: 2px solid var(--line); border-radius: 8px; padding: .22rem .3rem; background: var(--card); color: inherit; }
   .at { font-size: .74rem; }
   .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
-  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .45rem 1.1rem; }
-  .btn:hover { background: var(--grass); border-color: var(--grass); }
 </style>
 
-<script>
-  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
-    b.addEventListener('click', (e) => {
-      if (!confirm(b.dataset.confirm!)) e.preventDefault();
-    });
-  });
-</script>

@@ -2,25 +2,15 @@
 // a SeasonInput using the SAME code path a browser upload takes. That is the whole point:
 // the port is exercised by 14 real games before any of it is deployed.
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { SeasonContext } from '../src/lib/mssb/ingest.ts';
 import { analyzeUpload } from '../src/lib/mssb/ingest.ts';
 import type { GameInput, SeasonInput, ScheduleRound } from '../src/lib/mssb/types.ts';
-import { legacyContext, readLegacyTeams, REPO_ROOT } from './legacy-context.ts';
+import { legacyContext, readLegacyTeams, REPO_ROOT, walkJson } from './legacy-context.ts';
 
 export { REPO_ROOT, readLegacyTeams };
-
-function walkJson(dir: string): string[] {
-  const out: string[] = [];
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) out.push(...walkJson(full));
-    else if (name.endsWith('.json')) out.push(full);
-  }
-  return out.sort();
-}
 
 export type LoadedSeason = {
   input: SeasonInput;

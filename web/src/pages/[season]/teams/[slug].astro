@@ -8,7 +8,6 @@ import { portrait, pct3 } from '../../../lib/format.ts';
 // Rendered on demand now, so there is no getStaticPaths — an unknown slug is a 404
 // rather than a page that was never built.
 const { view } = Astro.locals;
-const data = view.data;
 const t = view.teamBySlug(Astro.params.slug!);
 if (!t) return Astro.rewrite('/404');
 

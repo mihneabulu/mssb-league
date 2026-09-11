@@ -109,12 +109,12 @@ const unassigned = games.filter((g) => g.round_no === null).length;
       </div>
 
       <div class="row-actions">
-        <button class="btn" type="submit" name="_action" value="save">Save</button>
+        <button class="btn sm" type="submit" name="_action" value="save">Save</button>
         {Number(g.raw_id) > 0 && (
-          <button class="btn ghost" type="submit" name="_action" value="reparse"
+          <button class="btn ghost sm" type="submit" name="_action" value="reparse"
                   title="Re-read the original file — use after a parser fix">Re-read file</button>
         )}
-        <button class="btn danger" type="submit" name="_action" value="delete"
+        <button class="btn danger sm" type="submit" name="_action" value="delete"
                 data-confirm={`Delete ${g.away_name} at ${g.home_name}? The original file is kept.`}>Delete</button>
         <a class="muted" href={`/${season.slug}/games/${g.rio_game_id}`}>View box score →</a>
       </div>
@@ -131,25 +131,8 @@ const unassigned = games.filter((g) => g.round_no === null).length;
   .gamerow { padding: .8rem 1rem; margin-bottom: .9rem; display: flex; flex-direction: column; gap: .6rem; }
   .head { font-size: .76rem; display: flex; gap: .4rem; flex-wrap: wrap; }
   .grid-row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; }
-  .f { display: flex; flex-direction: column; gap: .15rem; }
-  .f.grow { flex: 1; min-width: 160px; }
-  .f.grow input { width: 100%; }
-  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
   .score { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; padding-bottom: .1rem; }
   .at { padding-bottom: .35rem; }
   .row-actions { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
-  .btn { font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .3rem .9rem; }
-  .btn.ghost { background: var(--card); color: var(--ink); }
-  .btn.danger { background: var(--card); color: var(--dirt); border-color: var(--dirt); }
-  .btn.danger:hover { background: var(--dirt); color: #fff; }
 </style>
 
-<script>
-  // Confirmation is an enhancement; without JS the server still refuses nothing, so the
-  // delete button is deliberately a separate named action rather than a bare link.
-  document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
-    b.addEventListener('click', (e) => {
-      if (!confirm(b.dataset.confirm!)) e.preventDefault();
-    });
-  });
-</script>

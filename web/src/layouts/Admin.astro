@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import '../styles/admin.css';
 
 const { title } = Astro.props as { title?: string };
 const { actor } = Astro.locals;
@@ -20,7 +21,7 @@ const nav = [
     <title>{title ? `${title} · ` : ''}League admin</title>
     <meta name="robots" content="noindex" />
   </head>
-  <body>
+  <body class="admin">
     <header class="topbar admin-bar">
       <div class="topbar-inner">
         <a class="brand" href="/admin"><span class="ball">⚙️</span><span>League admin</span></a>
@@ -43,6 +44,15 @@ const nav = [
         <a href="/">← Back to the league site</a>
       </p>
     </footer>
+    <script>
+      // One copy for the whole admin. Confirmation is an enhancement: with JavaScript
+      // off the button still submits, and the server still refuses anything unsafe.
+      document.querySelectorAll<HTMLButtonElement>('button[data-confirm]').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          if (!confirm(b.dataset.confirm!)) e.preventDefault();
+        });
+      });
+    </script>
   </body>
 </html>
 

@@ -1,0 +1,141 @@
+/*
+ * Shared admin chrome.
+ *
+ * Every admin screen is the same handful of things — a button, a labelled field, a
+ * banner — and each page had grown its own near-identical copy of the rules. These are
+ * global rather than scoped because Astro's component styles do not reach into slotted
+ * children, so Admin.astro cannot style the pages it wraps.
+ */
+
+.btn {
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  text-decoration: none;
+}
+.btn:hover {
+  background: var(--grass);
+  border-color: var(--grass);
+}
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Secondary action: same shape, not the thing you came here to press. */
+.btn.ghost {
+  background: var(--card);
+  color: var(--ink);
+}
+.btn.ghost:hover {
+  background: var(--line);
+  border-color: var(--ink);
+}
+
+/* Destructive: outlined until hovered, so it never looks like the default. */
+.btn.danger {
+  background: var(--card);
+  color: var(--dirt);
+  border-color: var(--dirt);
+}
+.btn.danger:hover {
+  background: var(--dirt);
+  color: #fff;
+}
+
+/* For dense rows, where a full-size button would dominate. */
+.btn.sm {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.9rem;
+}
+
+/* A button that reads as a link — used for row actions inside a larger form. */
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linkish.danger {
+  color: var(--dirt);
+}
+
+/* Labelled field. */
+.f {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.f.grow {
+  flex: 1;
+  min-width: 200px;
+}
+.f.grow input,
+.f.grow select {
+  width: 100%;
+}
+.lbl {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft);
+}
+
+/* Rows and groups of fields. */
+.fields,
+.row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.row {
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+/* A bordered section of a form. */
+.block {
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+.block h2 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/* Form controls, scoped to the admin shell so the public pages are untouched. */
+.admin input,
+.admin select,
+.admin textarea {
+  font: inherit;
+  font-size: 0.88rem;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  padding: 0.28rem 0.4rem;
+  background: var(--card);
+  color: inherit;
+}
+.admin input[type='color'] {
+  padding: 0;
+  width: 44px;
+  height: 30px;
+}
+.admin input[type='checkbox'] {
+  width: auto;
+}
