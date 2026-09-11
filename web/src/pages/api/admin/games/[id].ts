@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       ]);
       if (!rawRows[0]) throw new InputError('The original file for this game was not kept.');
 
-      const text = await gunzip(rawRows[0].bytes_gz as ArrayBuffer);
+      const text = await gunzip(rawRows[0].bytes_gz);
       const ctx = await buildSeasonContext(db, seasonId);
       const a = analyzeUpload(text, String(rawRows[0].filename ?? 'archived.json'), ctx);
       if (a.status === 'error') throw new InputError(`Could not re-read it: ${a.error}`);

@@ -37,13 +37,45 @@ export async function gzip(text: string): Promise<Uint8Array> {
   return streamToBytes(input as ReadableStream<Uint8Array>);
 }
 
-export async function gunzip(bytes: Uint8Array | ArrayBuffer): Promise<string> {
-  // Copy into a plain ArrayBuffer-backed view: D1 hands back a buffer whose type is
-  // ArrayBufferLike, which Blob does not accept.
-  const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  const buf = new Uint8Array(source.length);
-  buf.set(source);
-  const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+/**
+ * Normalise whatever D1 hands back for a BLOB column into bytes.
+ *
+ * D1 returns BLOBs as a plain number[], not an ArrayBuffer. Passing that array straight
+ * to `new Response(...)` yields an empty body, which is how this was discovered; gunzip
+ * survived only because `new Uint8Array(array)` happens to accept one. Everything that
+ * reads a blob goes through here so the assumption lives in one place.
+ *
+ * The result is always a fresh copy backed by a plain ArrayBuffer. That matters as well
+ * as being tidy: a Uint8Array over an ArrayBufferLike (which is what the runtime may
+ * hand back) is rejected by both Blob and Response.
+ */
+export function toBytes(value: unknown): Uint8Array<ArrayBuffer> {
+  const source =
+    value instanceof Uint8Array
+      ? value
+      : value instanceof ArrayBuffer
+        ? new Uint8Array(value)
+        : Array.isArray(value)
+          ? Uint8Array.from(value as number[])
+          : ArrayBuffer.isView(value)
+            ? new Uint8Array(
+                (value as ArrayBufferView).buffer as ArrayBuffer,
+                (value as ArrayBufferView).byteOffset,
+                (value as ArrayBufferView).byteLength,
+              )
+            : null;
+
+  if (!source) {
+    throw new TypeError(`cannot read a blob of type ${Object.prototype.toString.call(value)}`);
+  }
+
+  const out = new Uint8Array(source.length);
+  out.set(source);
+  return out;
+}
+
+export async function gunzip(value: unknown): Promise<string> {
+  const stream = new Blob([toBytes(value)]).stream().pipeThrough(new DecompressionStream('gzip'));
   return new TextDecoder().decode(await streamToBytes(stream as ReadableStream<Uint8Array>));
 }
 
@@ -265,8 +297,7 @@ export async function commitBatch(
     }
 
     const rawText = await gunzip(
-      (await db.all(`SELECT raw_gz FROM staged_games WHERE id = ?`, [row.id]))[0]
-        .raw_gz as ArrayBuffer,
+      (await db.all(`SELECT raw_gz FROM staged_games WHERE id = ?`, [row.id]))[0].raw_gz,
     );
     const a = row.analyzed;
 

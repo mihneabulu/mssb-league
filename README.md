@@ -108,8 +108,8 @@ Without them the deploy and backup steps skip with a notice instead of failing.
 
 - **Backups matter more than they used to.** The git log was the backup — every game
   arrived as a commit. Now the database holds the only live copy, which is what
-  `backups/` and the nightly job are for. The archived original uploads are *not* in that
-  export; grab those from **Tools** if you need them.
+  `backups/` and the nightly job are for: a full JSON export plus every original upload,
+  each checksummed.
 - **Dry Bones** is the one uncertain character mapping — the colour variants look almost
   identical. If a portrait looks wrong, swap the files in `web/public/portraits/`.
 - **Decoded exports** (files usually named `decoded.*`) name characters instead of
