@@ -1,25 +1,28 @@
 ---
-import Base from '../layouts/Base.astro';
-import StandingsTable from '../components/StandingsTable.astro';
-import GameCard from '../components/GameCard.astro';
-import { data, scheduleWithResults } from '../lib/data';
+import Base from '../../layouts/Base.astro';
+import StandingsTable from '../../components/StandingsTable.astro';
+import GameCard from '../../components/GameCard.astro';
 
-const { currentRound, complete } = scheduleWithResults();
-// "Recent results" = the most recent week that actually has games played.
-const weeksPlayed = [...new Set(data.games.map((g) => g.week ?? 0))].sort((a, b) => a - b);
-const latestWeek = weeksPlayed.length ? weeksPlayed[weeksPlayed.length - 1] : null;
-const recent = data.games.filter((g) => (g.week ?? 0) === latestWeek).sort((a, b) => a.date - b.date);
+const { view } = Astro.locals;
+const data = view.data;
+const { currentRound, complete } = view.scheduleWithResults();
+// "Recent results" = the most recent round that actually has games played. Rounds are
+// now stored on the game, so this no longer has to guess from a folder name.
+const latestRound = view.latestRound();
+const recent = data.games
+  .filter((g) => g.round === latestRound)
+  .sort((a, b) => a.date - b.date);
 ---
 <Base title="Standings" active="home">
   <section class="hero card">
     <div class="hero-text">
-      <p class="kicker">Season 1 · 2026</p>
-      <h1>Mario Superstar Baseball League</h1>
+      <p class="kicker">{data.season.shortLabel}</p>
+      <h1>{data.season.name.split(" — ")[0]}</h1>
       <p class="muted sub">{data.teams.length} teams · {data.season.rounds}-round double round-robin</p>
     </div>
     <div class="hero-week">
       <span class="wlabel">{complete ? 'Season' : 'Now playing'}</span>
-      <span class="wnum">{complete ? 'Final' : `Week ${currentRound}`}</span>
+      <span class="wnum">{complete ? 'Final' : `Round ${currentRound}`}</span>
       {!complete && <span class="wof">of {data.season.rounds}</span>}
     </div>
   </section>
@@ -27,7 +30,7 @@ const recent = data.games.filter((g) => (g.week ?? 0) === latestWeek).sort((a, b
   <div class="section-head"><span class="pill">🏆 Standings</span></div>
   <StandingsTable />
 
-  <div class="section-head"><span class="pill">📅 Week {latestWeek ?? 1} results</span></div>
+  <div class="section-head"><span class="pill">📅 Round {latestRound ?? 1} results</span></div>
   <div class="results-grid">
     {recent.map((g) => <GameCard game={g} />)}
     {recent.length === 0 && <p class="muted">No games recorded yet.</p>}

@@ -1,0 +1,14 @@
+---
+// Success/error banners, passed back through the query string after a redirect so the
+// whole admin works without JavaScript.
+const ok = Astro.url.searchParams.get('ok');
+const err = Astro.url.searchParams.get('err');
+---
+{ok && <p class="flash flash-ok">{ok}</p>}
+{err && <p class="flash flash-err">{err}</p>}
+
+<style>
+  .flash { padding: .7rem 1rem; border-radius: var(--radius); border: 2px solid; font-weight: 600; margin: 1rem 0; }
+  .flash-ok { background: #eaf7e6; border-color: var(--grass); }
+  .flash-err { background: #fdeceb; border-color: var(--dirt); }
+</style>

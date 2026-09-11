@@ -1,9 +1,11 @@
 ---
-import Base from '../layouts/Base.astro';
-import TeamInline from '../components/TeamInline.astro';
-import { data, stadiumName, homeStadium, scheduleWithResults } from '../lib/data';
+import Base from '../../layouts/Base.astro';
+import TeamInline from '../../components/TeamInline.astro';
 
-const { rounds, currentRound } = scheduleWithResults();
+const { view } = Astro.locals;
+const data = view.data;
+const { stadiumName, homeStadium } = view;
+const { rounds, currentRound } = view.scheduleWithResults();
 ---
 <Base title="Schedule" active="schedule">
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">📅 Schedule</span></div>
@@ -19,8 +21,8 @@ const { rounds, currentRound } = scheduleWithResults();
         <div class="matchups">
           {rd.matchups.map((m) => {
             const g = m.game;
-            const away = g ? g.away : m.a;
-            const home = g ? g.home : m.b;
+            const away = g ? g.away : m.away;
+            const home = g ? g.home : m.home;
             const awW = g && g.winner === away;
             const hoW = g && g.winner === home;
             return (

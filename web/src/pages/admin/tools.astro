@@ -1,0 +1,61 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import Flash from '../../components/admin/Flash.astro';
+
+const { db } = Astro.locals;
+const seasons = await db.all(
+  `SELECT s.slug, s.short_label, ss.version, ss.built_at, length(ss.payload) AS bytes
+   FROM seasons s LEFT JOIN season_snapshots ss ON ss.season_id = s.id
+   ORDER BY s.start_date DESC, s.id DESC`,
+);
+const storage = await db.all(
+  `SELECT COUNT(*) AS files, COALESCE(SUM(size_gz),0) AS gz, COALESCE(SUM(size_raw),0) AS raw FROM game_raw`,
+);
+const s = storage[0] ?? {};
+const mb = (n: unknown) => `${(Number(n) / 1024 / 1024).toFixed(2)} MB`;
+---
+<Admin title="Tools">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">🛠 Tools</span></div>
+  <Flash />
+
+  <div class="section-head"><span class="pill">📦 Season data</span></div>
+  <div class="card" style="overflow:hidden">
+    <table class="grid">
+      <thead><tr><th>Season</th><th>Rebuilt</th><th>Version</th><th>Size</th><th></th></tr></thead>
+      <tbody>
+        {seasons.map((row) => (
+          <tr>
+            <td style="text-align:left"><strong>{row.short_label}</strong></td>
+            <td class="mono-num">{row.built_at ? new Date(Number(row.built_at) * 1000).toLocaleString() : '—'}</td>
+            <td class="mono-num">{row.version ?? '—'}</td>
+            <td class="mono-num">{row.bytes ? `${(Number(row.bytes) / 1024).toFixed(0)} KB` : '—'}</td>
+            <td class="acts">
+              <a href={`/api/admin/export?season=${row.slug}`} download>Download backup</a>
+              <form method="post" action="/api/admin/tools">
+                <input type="hidden" name="season" value={String(row.slug)} />
+                <button class="linkish" type="submit" name="_action" value="rebuild">Rebuild</button>
+              </form>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">
+    Rebuilding recalculates standings, leaders and every team page from the recorded
+    games. It happens automatically after any change — this is here for when you want to
+    be certain.
+  </p>
+
+  <div class="section-head"><span class="pill">💾 Storage</span></div>
+  <p class="muted">
+    {s.files} original upload{Number(s.files) === 1 ? '' : 's'} archived, {mb(s.gz)} stored
+    (from {mb(s.raw)} of files). The free database allows 500 MB.
+  </p>
+</Admin>
+
+<style>
+  .acts { display: flex; gap: .8rem; justify-content: flex-end; align-items: center; }
+  .acts form { display: inline; }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; }
+</style>

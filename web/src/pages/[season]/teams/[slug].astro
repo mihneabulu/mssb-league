@@ -1,16 +1,19 @@
 ---
-import Base from '../../layouts/Base.astro';
-import StatTable from '../../components/StatTable.astro';
-import type { Col, Row } from '../../components/StatTable.astro';
-import GameCard from '../../components/GameCard.astro';
-import { data, teamGames, portrait, withUrl, pct3 } from '../../lib/data';
+import Base from '../../../layouts/Base.astro';
+import StatTable from '../../../components/StatTable.astro';
+import type { Col, Row } from '../../../components/StatTable.astro';
+import GameCard from '../../../components/GameCard.astro';
+import { portrait, pct3 } from '../../../lib/format.ts';
 
-export function getStaticPaths() {
-  return data.teams.map((t) => ({ params: { slug: t.slug } }));
-}
-const { slug } = Astro.params;
-const t = data.teams.find((x) => x.slug === slug)!;
-const games = teamGames(t.name).sort((a, b) => a.date - b.date);
+// Rendered on demand now, so there is no getStaticPaths — an unknown slug is a 404
+// rather than a page that was never built.
+const { view } = Astro.locals;
+const data = view.data;
+const t = view.teamBySlug(Astro.params.slug!);
+if (!t) return Astro.rewrite('/404');
+
+const games = view.teamGames(t.name).sort((a, b) => a.date - b.date);
+const roster = view.teamCharacters(t);
 
 const batCols: Col[] = [
   { key: 'ab', label: 'AB' }, { key: 'h', label: 'H' }, { key: 'hr', label: 'HR' },
@@ -18,9 +21,8 @@ const batCols: Col[] = [
   { key: 'sb', label: 'SB' }, { key: 'avg', label: 'AVG', fmt: 'dp3' },
   { key: 'ops', label: 'OPS', fmt: 'dp3' },
 ];
-const batRows: Row[] = t.roster
-  .map((m) => data.characters.find((c) => c.charId === m.charId))
-  .filter((c): c is NonNullable<typeof c> => !!c && c.batting.pa > 0)
+const batRows: Row[] = roster
+  .filter((c) => c.batting.pa > 0)
   .map((c) => ({ charId: c.charId, name: c.name, team: t.name,
     values: { ab: c.batting.ab, h: c.batting.h, hr: c.batting.hr, rbi: c.batting.rbi,
       bb: c.batting.bb, so: c.batting.so, sb: c.batting.sb, avg: c.batting.avg, ops: c.batting.ops } }));
@@ -30,16 +32,15 @@ const pitCols: Col[] = [
   { key: 'whip', label: 'WHIP', fmt: 'dp2', sort: 'asc' }, { key: 'so', label: 'K' },
   { key: 'h', label: 'H' }, { key: 'bb', label: 'BB' }, { key: 'hr', label: 'HR' },
 ];
-const pitRows: Row[] = t.roster
-  .map((m) => data.characters.find((c) => c.charId === m.charId))
-  .filter((c): c is NonNullable<typeof c> => !!c && c.pitching.wasPitcher > 0)
+const pitRows: Row[] = roster
+  .filter((c) => c.pitching.wasPitcher > 0)
   .map((c) => ({ charId: c.charId, name: c.name, team: t.name,
     values: { ip: c.pitching.ip, era: c.pitching.era, whip: c.pitching.whip, so: c.pitching.so,
       h: c.pitching.h, bb: c.pitching.bb, hr: c.pitching.hr } }));
 ---
 <Base title={t.name} active="teams">
   <section class="thead card" style={`--team:${t.color}`}>
-    <img class="pf big" src={withUrl(t.captainPortrait)} alt="" width={84} height={84} />
+    <img class="pf big" src={`/${t.captainPortrait}`} alt="" width={84} height={84} />
     <div class="thead-main">
       <p class="kicker">Rank #{t.rank}</p>
       <h1>{t.name}</h1>
@@ -60,7 +61,7 @@ const pitRows: Row[] = t.roster
   <div class="roster">
     {t.roster.map((m) => (
       <div class="rc">
-        <img class="pf" src={withUrl(portrait(m.charId))} alt="" width={48} height={48} />
+        <img class="pf" src={portrait(m.charId)} alt="" width={48} height={48} />
         <span class="rc-name">{m.name}</span>
         {m.captain && <span class="tag" style="background:var(--gold)">C</span>}
       </div>

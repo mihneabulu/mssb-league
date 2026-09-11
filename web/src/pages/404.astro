@@ -1,0 +1,38 @@
+---
+import '../styles/global.css';
+import { listSeasons } from '../lib/db/snapshot.ts';
+
+// Reached both by a direct miss and by a rewrite from the middleware or a page, so it
+// loads its own data rather than relying on locals the middleware may have skipped.
+Astro.response.status = 404;
+const seasons = Astro.locals.db ? await listSeasons(Astro.locals.db) : [];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Not found · MSB League</title>
+  </head>
+  <body>
+    <main class="wrap nf">
+      <p class="ball">⚾</p>
+      <h1>Nothing here</h1>
+      <p class="muted">That page, team or game doesn’t exist — it may belong to a different season.</p>
+      {seasons.length > 0 && (
+        <p class="links">
+          {seasons.map((s) => <a href={`/${s.slug}`}>{s.shortLabel}</a>)}
+        </p>
+      )}
+      <p class="links"><a href="/">Back to the current season</a></p>
+    </main>
+  </body>
+</html>
+
+<style>
+  .nf { text-align: center; padding-top: 4rem; }
+  .nf .ball { font-size: 3rem; margin: 0; }
+  .nf h1 { font-family: var(--font-display); margin: .3rem 0 .5rem; }
+  .links { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+  .links a { font-weight: 700; }
+</style>

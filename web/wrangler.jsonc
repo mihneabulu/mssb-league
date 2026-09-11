@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mssb-league",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Deliberately false. If the workers.dev route stays enabled, /admin is reachable at
+  // mssb-league.<subdomain>.workers.dev without ever passing through Cloudflare Access,
+  // and the JWT check becomes the only thing between a stranger and the league data.
+  "workers_dev": false,
+
+  "routes": [{ "pattern": "mssbleague.com", "custom_domain": true }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mssb-league",
+      // Replace with the id printed by: wrangler d1 create mssb-league
+      "database_id": "cb33f247-e281-4920-8747-4404225cff57",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Your Zero Trust team domain, e.g. "mihnea.cloudflareaccess.com".
+    "ACCESS_TEAM_DOMAIN": "mihneabulu.cloudflareaccess.com",
+    // The Access application's AUD tag (Access > Applications > Overview).
+    "ACCESS_AUD": "cf41acb7396cd86626d2228b57479886ae42188b592f1ec7822987cac5453a1d",
+    // Only honoured when the build is also a dev build, so it cannot open up a
+    // deployed Worker on its own.
+    "DEV_BYPASS_AUTH": "false"
+  },
+
+  "observability": { "enabled": true }
+}

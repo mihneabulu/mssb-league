@@ -1,7 +1,7 @@
 ---
-import { standingsTeams, pct3, STAT_INFO } from '../lib/data';
+import { pct3, STAT_INFO } from '../lib/format.ts';
 import TeamInline from './TeamInline.astro';
-const teams = standingsTeams();
+const teams = Astro.locals.view.standingsTeams();
 const info = STAT_INFO.standings;
 const cols = [
   { key: 'w', label: 'W' }, { key: 'l', label: 'L' },

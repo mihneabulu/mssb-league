@@ -1,0 +1,97 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import Flash from '../../../components/admin/Flash.astro';
+
+const { db } = Astro.locals;
+const seasons = await db.all(
+  `SELECT s.id, s.slug, s.name, s.short_label, s.start_date, s.rounds, s.status, s.is_current,
+          (SELECT COUNT(*) FROM teams t WHERE t.season_id = s.id) AS teams,
+          (SELECT COUNT(*) FROM games g WHERE g.season_id = s.id) AS games
+   FROM seasons s ORDER BY s.start_date DESC, s.id DESC`,
+);
+const year = new Date().getFullYear();
+---
+<Admin title="Seasons">
+  <div class="section-head" style="margin-top:1.4rem"><span class="pill">📅 Seasons</span></div>
+  <Flash />
+
+  <div class="card" style="overflow:hidden">
+    <table class="grid">
+      <thead>
+        <tr><th>Season</th><th>Address</th><th>Status</th><th>Teams</th><th>Games</th><th>Starts</th><th></th></tr>
+      </thead>
+      <tbody>
+        {seasons.map((s) => (
+          <tr>
+            <td style="text-align:left">
+              <strong>{s.short_label}</strong>
+              {Number(s.is_current) === 1 && <span class="tag" style="background:var(--gold)">current</span>}
+              <div class="muted sm">{s.name}</div>
+            </td>
+            <td class="mono-num">/{s.slug}</td>
+            <td>{s.status}</td>
+            <td class="mono-num">{s.teams}</td>
+            <td class="mono-num">{s.games}</td>
+            <td class="mono-num">{s.start_date}</td>
+            <td class="rowacts">
+              <a href={`/admin/seasons/${s.slug}`}>Set up →</a>
+              {Number(s.is_current) !== 1 && (
+                <form method="post" action={`/api/admin/seasons/${s.slug}`}>
+                  <button class="linkish" type="submit" name="_action" value="make-current">Make current</button>
+                </form>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head"><span class="pill">✨ Start a new season</span></div>
+  <form class="card newseason" method="post" action="/api/admin/seasons">
+    <p class="muted" style="margin-top:0">
+      A new season starts empty. Copying teams brings across names, colours and home
+      stadiums — but not rosters, because a new season means a new draft.
+    </p>
+    <div class="fields">
+      <label class="f">
+        <span class="lbl">Name</span>
+        <input name="name" required placeholder={`Mario Superstar Baseball League ${year} — Season 2`} />
+      </label>
+      <label class="f">
+        <span class="lbl">Short label</span>
+        <input name="shortLabel" required placeholder={`Season 2 · ${year}`} />
+      </label>
+      <label class="f">
+        <span class="lbl">Address</span>
+        <input name="slug" required placeholder="s2" pattern="[a-z0-9][a-z0-9-]*" />
+      </label>
+      <label class="f">
+        <span class="lbl">First day</span>
+        <input name="startDate" type="date" required />
+      </label>
+      <label class="f">
+        <span class="lbl">Copy teams from</span>
+        <select name="cloneFrom">
+          <option value="">— start with no teams —</option>
+          {seasons.map((s) => <option value={Number(s.id)}>{s.short_label}</option>)}
+        </select>
+      </label>
+    </div>
+    <button class="btn" type="submit">Create season</button>
+  </form>
+</Admin>
+
+<style>
+  .sm { font-size: .75rem; }
+  .rowacts { display: flex; gap: .7rem; align-items: center; justify-content: flex-end; }
+  .rowacts form { display: inline; }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; }
+  .newseason { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .9rem; align-items: flex-start; }
+  .fields { display: flex; gap: .8rem; flex-wrap: wrap; }
+  .f { display: flex; flex-direction: column; gap: .15rem; }
+  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+  .newseason input, .newseason select { font: inherit; font-size: .9rem; border: 2px solid var(--line); border-radius: 8px; padding: .3rem .45rem; background: var(--card); color: inherit; min-width: 200px; }
+  .btn { font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: .45rem 1.1rem; }
+  .btn:hover { background: var(--grass); border-color: var(--grass); }
+</style>

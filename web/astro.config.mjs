@@ -1,10 +1,16 @@
+import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
-// Deployed to GitHub Pages as a project site:
-//   https://mihneabulu.github.io/mssb-league/
-// If you rename the repo, update `base` to match ("/<repo-name>").
+// Served from Cloudflare Workers at https://mssbleague.com.
+//
+// `output: 'server'` because the whole point of the rebuild is that a league manager
+// uploads a game in the browser and sees standings change immediately — a static build
+// would put a deploy pipeline back in the middle of that.
 export default defineConfig({
-  site: 'https://mihneabulu.github.io',
-  base: '/mssb-league',
-  output: 'static',
+  site: 'https://mssbleague.com',
+  output: 'server',
+  adapter: cloudflare({
+    // Gives `astro dev` the real bindings (a local D1 via Miniflare) instead of stubs.
+    platformProxy: { enabled: true },
+  }),
 });

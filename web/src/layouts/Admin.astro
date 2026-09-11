@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+
+const { title } = Astro.props as { title?: string };
+const { actor } = Astro.locals;
+
+const nav = [
+  { href: '/admin', label: 'Overview' },
+  { href: '/admin/games', label: 'Games' },
+  { href: '/admin/upload', label: 'Upload' },
+  { href: '/admin/seasons', label: 'Seasons' },
+  { href: '/admin/tools', label: 'Tools' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} · ` : ''}League admin</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <header class="topbar admin-bar">
+      <div class="topbar-inner">
+        <a class="brand" href="/admin"><span class="ball">⚙️</span><span>League admin</span></a>
+        <nav class="nav">
+          {nav.map((n) => (
+            <a href={n.href} aria-current={Astro.url.pathname === n.href ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+        <span class="who">
+          {actor?.email}
+          {actor?.dev && <span class="tag devtag">dev bypass</span>}
+        </span>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <footer class="wrap" style="padding-top:0">
+      <p class="muted" style="font-size:.8rem; border-top:2px solid #efe4d2; padding-top:1rem">
+        <a href="/">← Back to the league site</a>
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .admin-bar { background: var(--ink); }
+  .admin-bar .brand, .admin-bar .nav a { color: #fff; }
+  .admin-bar .nav a[aria-current='page'] { color: var(--gold); }
+  .who { margin-left: auto; color: #fff; font-size: .8rem; opacity: .85; display: flex; align-items: center; gap: .4rem; }
+  .devtag { background: var(--dirt); color: #fff; }
+</style>

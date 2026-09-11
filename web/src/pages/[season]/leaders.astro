@@ -1,9 +1,11 @@
 ---
-import Base from '../layouts/Base.astro';
-import StatTable from '../components/StatTable.astro';
-import type { Col, Row } from '../components/StatTable.astro';
-import { data, team, portrait, withUrl } from '../lib/data';
+import Base from '../../layouts/Base.astro';
+import StatTable from '../../components/StatTable.astro';
+import type { Col, Row } from '../../components/StatTable.astro';
+import { portrait } from '../../lib/format.ts';
 
+const { view, links } = Astro.locals;
+const data = view.data;
 const chars = data.characters;
 const byId = new Map(chars.map((c) => [c.charId, c]));
 
@@ -51,11 +53,11 @@ const highlights: Hi[] = [
   <div class="hi-grid">
     {highlights.map((h) => {
       const c = byId.get(h.charId)!;
-      const t = team(c.team);
+      const t = c.team ? view.team(c.team) : undefined;
       return (
-        <a class="card hi" href={withUrl(`teams/${t.slug}`)} style={`--team:${t.color}`}>
+        <a class="card hi" href={t ? links.team(t.slug) : '#'} style={`--team:${t?.color ?? 'var(--line)'}`}>
           <span class="hi-title">{h.title}</span>
-          <img class="pf hi-pf" src={withUrl(portrait(h.charId))} alt="" width={54} height={54} />
+          <img class="pf hi-pf" src={portrait(h.charId)} alt="" width={54} height={54} />
           <span class="hi-name">{c.name}</span>
           <span class="hi-val">{h.value}</span>
         </a>

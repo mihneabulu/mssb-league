@@ -1,12 +1,13 @@
 ---
-import type { Game } from '../lib/data';
-import { team, stadiumName, withUrl } from '../lib/data';
+import type { Game } from '../lib/mssb/types.ts';
 import TeamInline from './TeamInline.astro';
+
 const { game } = Astro.props as { game: Game };
+const { view, links } = Astro.locals;
 // Home team listed first (home hosts at its own stadium).
 const rows = [
-  { name: game.home, score: game.homeScore, side: 'home' },
-  { name: game.away, score: game.awayScore, side: 'away' },
+  { name: game.home, score: game.homeScore },
+  { name: game.away, score: game.awayScore },
 ];
 const win = game.winner;
 ---
@@ -20,8 +21,8 @@ const win = game.winner;
     ))}
   </div>
   <div class="gcard-foot muted">
-    <span><i>⚾</i> {stadiumName(game.stadiumId)}</span>
-    <a href={withUrl(`games#${game.gameId}`)} class="boxlink">Box score →</a>
+    <span><i>⚾</i> {view.stadiumName(game.stadiumId)}</span>
+    <a href={links.game(game.gameId)} class="boxlink">Box score →</a>
   </div>
 </div>
 
