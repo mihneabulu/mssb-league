@@ -125,6 +125,11 @@ jobs:
           headers = {
               'CF-Access-Client-Id': os.environ['CF_ACCESS_CLIENT_ID'],
               'CF-Access-Client-Secret': os.environ['CF_ACCESS_CLIENT_SECRET'],
+              # Cloudflare's Browser Integrity Check rejects urllib's default agent with
+              # "error code: 1010" before Access is ever consulted — which reads exactly
+              # like an authentication failure and is not one. curl's default agent is
+              # allowed, which is why the JSON export above worked and this did not.
+              'User-Agent': 'mssb-league-backup/1 (+https://github.com/mihneabulu/mssb-league)',
           }
 
           def get(url):
