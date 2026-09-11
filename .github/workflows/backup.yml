@@ -54,10 +54,16 @@ jobs:
           # client id looks like "<uuid>.access"; a pasted-wrong value usually shows up
           # here as the wrong length or a missing suffix.
           echo "URL:       ${LEAGUE_URL}/api/admin/export"
-          echo "client id: ${#CF_ACCESS_CLIENT_ID} chars, ends with '${CF_ACCESS_CLIENT_ID##*.}'"
+          # A prefix, not the whole value: the client id is an identifier, not the
+          # secret, and seeing the first characters lets it be compared against the
+          # Service Tokens list in the dashboard.
+          echo "client id: ${#CF_ACCESS_CLIENT_ID} chars, starts '${CF_ACCESS_CLIENT_ID:0:8}', ends '${CF_ACCESS_CLIENT_ID##*.}'"
           echo "secret:    ${#CF_ACCESS_CLIENT_SECRET} chars"
           case "${CF_ACCESS_CLIENT_ID}" in
             *[[:space:]]*) echo "::warning::client id contains whitespace — check for a stray newline" ;;
+          esac
+          case "${CF_ACCESS_CLIENT_SECRET}" in
+            *[[:space:]]*) echo "::warning::client secret contains whitespace — check for a stray newline" ;;
           esac
 
           code=$(curl -sS --max-time 120 \
