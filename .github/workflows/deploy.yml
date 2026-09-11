@@ -1,36 +1,70 @@
-name: Deploy site to GitHub Pages
+name: Deploy to Cloudflare
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
+# One deploy at a time; a queued run should not overtake a running one.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: deploy-worker
+  cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
-      - name: Build Astro site
-        uses: withastro/action@v3
-        with:
-          path: ./web
-          node-version: 26
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      # The parity suite is the gate. It rebuilds Season 1 from the raw files and from
+      # SQLite and diffs both against the output build.py produced, so a change that
+      # silently alters a stat cannot reach the site.
+      - name: Verify stat parity and run tests
+        run: npm test
+
+      - name: Type-check (including .astro)
+        run: npm run typecheck
+
+      - run: npm run build
+
+      # Deploying needs credentials this repo may not have yet. Tests and type-checking
+      # above still run and still gate the branch; only the deploy is skipped, so a fresh
+      # clone does not show a red X for a missing secret.
+      - name: Check for Cloudflare credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping deploy — set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to enable it."
+          fi
+
+      - name: Apply database migrations
+        if: steps.creds.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: web
+          command: d1 migrations apply mssb-league --remote
+
+      - name: Deploy Worker
+        if: steps.creds.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: web
+          command: deploy

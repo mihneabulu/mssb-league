@@ -1,0 +1,92 @@
+name: Nightly backup
+
+# The git repo used to be the backup: every game arrived as a commit. Now the league
+# lives in D1, which has no history and no second copy, so this pulls a full export
+# every night and commits it here.
+#
+# Needs three secrets:
+#   LEAGUE_URL               https://mssbleague.com
+#   CF_ACCESS_CLIENT_ID      Access service token id
+#   CF_ACCESS_CLIENT_SECRET  Access service token secret
+#
+# The service token must be allowed by a policy on the Access application, otherwise
+# Access will bounce this the same way it bounces an unauthenticated browser.
+
+on:
+  schedule:
+    - cron: '17 4 * * *' # 04:17 UTC daily, off the hour to avoid the stampede
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.CF_ACCESS_CLIENT_ID }}" ] && [ -n "${{ secrets.LEAGUE_URL }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping backup — set LEAGUE_URL, CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET."
+          fi
+
+      - name: Fetch export
+        if: steps.creds.outputs.ready == 'true'
+        env:
+          LEAGUE_URL: ${{ secrets.LEAGUE_URL }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          mkdir -p backups
+          code=$(curl -sS --fail-with-body --max-time 120 \
+            -H "CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}" \
+            -H "CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}" \
+            -o backups/league-backup.json -w '%{http_code}' \
+            "${LEAGUE_URL}/api/admin/export")
+          echo "HTTP ${code}"
+
+      - name: Sanity-check the export before committing
+        if: steps.creds.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          # A redirect to the Access login is still a 200 of HTML, so check the shape
+          # rather than the status: a bad backup that overwrites a good one is worse
+          # than no backup at all.
+          python3 - <<'PY'
+          import json, sys
+          with open('backups/league-backup.json') as f:
+              data = json.load(f)
+          seasons = data.get('seasons')
+          if not isinstance(seasons, list) or not seasons:
+              sys.exit('export contains no seasons')
+          games = sum(len(s.get('games', [])) for s in seasons)
+          teams = sum(len(s.get('teams', [])) for s in seasons)
+          if games == 0 and teams == 0:
+              sys.exit('export is empty')
+          print(f'{len(seasons)} season(s), {teams} teams, {games} games')
+          PY
+
+      - name: Commit if anything changed
+        if: steps.creds.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- backups/; then
+            echo "No change since the last backup."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backups/
+          git commit -m "Nightly league backup"
+          git push

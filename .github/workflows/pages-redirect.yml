@@ -1,0 +1,35 @@
+name: Publish redirect to GitHub Pages
+
+# The league used to live at mihneabulu.github.io/mssb-league. Rather than leave that
+# serving a stale copy of Season 1 forever, Pages now publishes a single page that
+# forwards to the real site.
+
+on:
+  push:
+    branches: [main]
+    paths: ['redirect/**', '.github/workflows/pages-redirect.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: redirect
+      - id: deployment
+        uses: actions/deploy-pages@v4
