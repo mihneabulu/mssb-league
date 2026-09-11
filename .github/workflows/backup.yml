@@ -49,12 +49,36 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p backups
-          code=$(curl -sS --fail-with-body --max-time 120 \
+
+          # Diagnostics that never print the secret itself. A Cloudflare service token
+          # client id looks like "<uuid>.access"; a pasted-wrong value usually shows up
+          # here as the wrong length or a missing suffix.
+          echo "URL:       ${LEAGUE_URL}/api/admin/export"
+          echo "client id: ${#CF_ACCESS_CLIENT_ID} chars, ends with '${CF_ACCESS_CLIENT_ID##*.}'"
+          echo "secret:    ${#CF_ACCESS_CLIENT_SECRET} chars"
+          case "${CF_ACCESS_CLIENT_ID}" in
+            *[[:space:]]*) echo "::warning::client id contains whitespace — check for a stray newline" ;;
+          esac
+
+          code=$(curl -sS --max-time 120 \
             -H "CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}" \
             -H "CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}" \
+            -D /tmp/headers.txt \
             -o backups/league-backup.json -w '%{http_code}' \
             "${LEAGUE_URL}/api/admin/export")
           echo "HTTP ${code}"
+
+          if [ "${code}" != "200" ]; then
+            echo "--- response headers ---"
+            grep -iE '^(location|cf-|content-type)' /tmp/headers.txt || true
+            echo "--- first 200 bytes of body ---"
+            head -c 200 backups/league-backup.json || true
+            echo
+            echo "::error::Access did not accept the service token. A 302 to the login page means the application policy is not matching this token — check the policy Action is 'Service Auth' (not Allow) on the application that covers this hostname."
+            # Leave the previous backup untouched.
+            git checkout -- backups/ 2>/dev/null || rm -f backups/league-backup.json
+            exit 1
+          fi
 
       - name: Sanity-check the export before committing
         if: steps.creds.outputs.ready == 'true'
