@@ -1,10 +1,16 @@
 import type { APIRoute } from 'astro';
 
 import { audit, failed, handle, seeOther } from '../../../lib/admin/respond.ts';
-import { buildSeasonContext, createBatch, stageFile } from '../../../lib/db/uploads.ts';
+import {
+  buildSeasonContext,
+  createBatch,
+  stageFile,
+  stageRejected,
+} from '../../../lib/db/uploads.ts';
 
-/** Cap a single upload so a stray file cannot exhaust the request. */
-const MAX_FILE_BYTES = 4 * 1024 * 1024; // a Rio export is ~316 KB
+/** Caps so a stray file cannot exhaust the request. A Rio export is ~316 KB. */
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 24 * 1024 * 1024;
 const MAX_FILES = 20;
 
 export const POST: APIRoute = async ({ request, locals }) =>
@@ -19,6 +25,14 @@ export const POST: APIRoute = async ({ request, locals }) =>
       return failed('/admin/upload', `That is more than ${MAX_FILES} files at once.`);
     }
 
+    const total = files.reduce((sum, f) => sum + f.size, 0);
+    if (total > MAX_TOTAL_BYTES) {
+      return failed(
+        '/admin/upload',
+        `Those files come to ${Math.round(total / 1024 / 1024)} MB, which is more than can be handled at once. Try fewer at a time.`,
+      );
+    }
+
     const seasonRows = await db.all(`SELECT id, slug FROM seasons WHERE is_current = 1`);
     const season = seasonRows[0];
     if (!season) {
@@ -31,7 +45,14 @@ export const POST: APIRoute = async ({ request, locals }) =>
 
     for (const file of files) {
       if (file.size > MAX_FILE_BYTES) {
-        await stageFile(db, batchId, file.name, '', ctx); // records the failure visibly
+        // Staged as a rejection with a real reason. Passing empty text to stageFile
+        // would surface this as "not valid JSON", which tells the reader nothing.
+        await stageRejected(
+          db,
+          batchId,
+          file.name,
+          `This file is ${Math.round(file.size / 1024 / 1024)} MB. A Project Rio game file is normally under 1 MB — is it the right file?`,
+        );
         continue;
       }
       await stageFile(db, batchId, file.name, await file.text(), ctx);

@@ -180,6 +180,24 @@ export async function createBatch(
   return id;
 }
 
+/**
+ * Record a file that was rejected before it could be read at all, so it still appears in
+ * the review table with a reason a person can act on rather than vanishing silently.
+ */
+export async function stageRejected(
+  db: Executable,
+  batchId: string,
+  filename: string,
+  reason: string,
+): Promise<void> {
+  await db.run(
+    `INSERT INTO staged_games
+       (batch_id, filename, status, error, analyzed_json, raw_gz, sha256, confidence)
+     VALUES (?, ?, 'error', ?, '{}', ?, '', 'none')`,
+    [batchId, filename, reason, await gzip('')],
+  );
+}
+
 export async function stageFile(
   db: Executable,
   batchId: string,
