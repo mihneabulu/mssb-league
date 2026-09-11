@@ -1,12 +1,11 @@
 {
-  "exportedAt": "2026-09-11T05:12:20.344Z",
   "schema": 1,
   "seasons": [
     {
       "season": {
         "slug": "s1",
-        "name": "Mario Superstar Baseball League 2026 — Season 1",
-        "shortLabel": "Season 1 · 2026",
+        "name": "Mario Superstar Baseball League 2026 \u2014 Season 1",
+        "shortLabel": "Season 1 \u00b7 2026",
         "startDate": "2026-06-29",
         "rounds": 10
       },
