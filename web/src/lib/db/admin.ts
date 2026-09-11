@@ -187,6 +187,20 @@ export async function deleteTeam(db: Executable, seasonId: number, teamId: numbe
   if (Number(games[0]?.n) > 0) {
     throw new InputError('That team has played games. Delete or reassign those games first.');
   }
+
+  // matchups reference teams with no ON DELETE action, so removing a scheduled team
+  // either fails with an opaque foreign-key error or orphans the fixture, which then
+  // renders as "undefined" on the schedule page.
+  const fixtures = await db.all(
+    `SELECT COUNT(*) AS n FROM matchups WHERE season_id = ? AND (away_team_id = ? OR home_team_id = ?)`,
+    [seasonId, teamId, teamId],
+  );
+  if (Number(fixtures[0]?.n) > 0) {
+    throw new InputError(
+      'That team is in the schedule. Regenerate or edit the schedule to remove its fixtures first.',
+    );
+  }
+
   await db.run(`DELETE FROM teams WHERE id = ? AND season_id = ?`, [teamId, seasonId]);
 }
 
@@ -338,8 +352,12 @@ export async function saveSchedule(
   );
 
   await db.batch(statements);
+  // The highest round number, not how many there are: the editor can leave gaps (clear
+  // both teams from round 3 of 5 and rounds 1, 2, 4, 5 remain). Using the count made
+  // suggestRound reject a legitimate round 5 and the homepage read "Round 5 of 4".
+  const highestRound = rounds.reduce((max, r) => Math.max(max, r.round), 0);
   await db.run(`UPDATE seasons SET rounds = ?, updated_at = ? WHERE id = ?`, [
-    rounds.length,
+    highestRound,
     now(),
     seasonId,
   ]);

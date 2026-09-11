@@ -4,7 +4,7 @@
 // survives a reload, a partial commit is recoverable, and a 316 KB file never has to
 // make a second trip through the browser.
 
-import { now } from '../admin/respond.ts';
+import { InputError, now } from '../admin/respond.ts';
 import type { AnalyzedGame, SeasonContext } from '../mssb/ingest.ts';
 import { analyzeUpload } from '../mssb/ingest.ts';
 import { buildRosterIndex } from '../mssb/identify.ts';
@@ -253,6 +253,18 @@ export async function stageFile(
   );
 }
 
+/**
+ * The archived bytes for a batch, in one query.
+ *
+ * Fetching these per game inside the commit loop cost an extra query each, which is how
+ * a large batch used to exceed D1's 50-queries-per-invocation limit. See the budget note
+ * on commitBatch.
+ */
+async function stagedRawBytes(db: Executable, batchId: string): Promise<Map<number, unknown>> {
+  const rows = await db.all(`SELECT id, raw_gz FROM staged_games WHERE batch_id = ?`, [batchId]);
+  return new Map(rows.map((r) => [Number(r.id), r.raw_gz]));
+}
+
 export async function listStaged(db: Executable, batchId: string): Promise<StagedRow[]> {
   const rows = await db.all(
     `SELECT id, filename, status, error, analyzed_json, sha256,
@@ -285,6 +297,14 @@ export type CommitDecision = {
   round: number | null;
 };
 
+/**
+ * Write a reviewed batch into the league.
+ *
+ * Query budget matters here: D1 allows 50 per Worker invocation on the free plan, and the
+ * caller also runs rebuildSnapshot (10) in the same request. This costs 5 + 2 per game,
+ * so the per-upload file cap in the API route is what keeps the total in bounds — raise
+ * one and check the other.
+ */
 export async function commitBatch(
   db: Executable,
   batchId: string,
@@ -294,6 +314,7 @@ export async function commitBatch(
 ): Promise<{ committed: number; skipped: number }> {
   const staged = await listStaged(db, batchId);
   const byId = new Map(staged.map((s) => [s.id, s]));
+  const rawById = await stagedRawBytes(db, batchId);
 
   const roundRows = await db.all(`SELECT id, round_no FROM rounds WHERE season_id = ?`, [seasonId]);
   const roundIdByNo = new Map(roundRows.map((r) => [Number(r.round_no), Number(r.id)]));
@@ -302,6 +323,29 @@ export async function commitBatch(
     `SELECT m.id, m.round_id, m.away_team_id, m.home_team_id FROM matchups m WHERE m.season_id = ?`,
     [seasonId],
   );
+
+  // Refuse the whole batch before writing anything if it would collide. Two files for
+  // the same game (the raw and the `decoded.` export, say) both stage as ok, and the
+  // second INSERT would then violate UNIQUE (season_id, rio_game_id) part-way through the
+  // loop: earlier games committed, no snapshot rebuild, batch left open, and a retry
+  // failing on the games already written. Catching it up front keeps the batch retryable.
+  const wanted = decisions.filter((d) => !d.skip).map((d) => byId.get(d.stagedId)).filter(Boolean);
+  const seen = new Map<string, string>();
+  for (const row of wanted as StagedRow[]) {
+    const id = row.analyzed.rioGameId;
+    const first = seen.get(id);
+    if (first) {
+      throw new InputError(
+        `"${row.filename}" and "${first}" are the same game (${id}). Tick only one of them.`,
+      );
+    }
+    seen.set(id, row.filename);
+    if (row.status === 'duplicate') {
+      throw new InputError(
+        `"${row.filename}" is already recorded. Untick it, or delete the existing game first.`,
+      );
+    }
+  }
 
   let committed = 0;
   let skipped = 0;
@@ -314,9 +358,7 @@ export async function commitBatch(
       continue;
     }
 
-    const rawText = await gunzip(
-      (await db.all(`SELECT raw_gz FROM staged_games WHERE id = ?`, [row.id]))[0].raw_gz,
-    );
+    const rawText = await gunzip(rawById.get(row.id));
     const a = row.analyzed;
 
     const roundId = decision.round === null ? null : (roundIdByNo.get(decision.round) ?? null);

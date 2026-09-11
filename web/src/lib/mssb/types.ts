@@ -71,8 +71,9 @@ export type Team = {
   name: string;
   slug: string;
   color: string;
-  captainCharId: number;
-  captainPortrait: string;
+  /** Null until the team has been drafted. */
+  captainCharId: number | null;
+  captainPortrait: string | null;
   stadium: string;
   roster: RosterChar[];
   record: TeamRecord;
@@ -156,8 +157,8 @@ export type SeasonInput = {
     name: string;
     slug: string;
     color: string;
-    captainCharId: number;
-    captainPortrait: string;
+    captainCharId: number | null;
+    captainPortrait: string | null;
     stadium: string;
     roster: RosterChar[];
   }[];

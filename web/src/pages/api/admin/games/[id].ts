@@ -73,6 +73,15 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     const home = Number(form.get('home'));
     if (!away || !home) throw new InputError('Both teams are required.');
 
+    // Both teams must belong to this game's season. Without this a stale page could
+    // store a team id from another season; the write would succeed and every later
+    // snapshot rebuild would then throw, leaving the season unviewable.
+    const valid = await db.all(`SELECT id FROM teams WHERE season_id = ?`, [seasonId]);
+    const ids = new Set(valid.map((t) => Number(t.id)));
+    if (!ids.has(away) || !ids.has(home)) {
+      throw new InputError('Those teams are not in this game\'s season. Reload and try again.');
+    }
+
     const roundRaw = str(form, 'round');
     let roundId: number | null = null;
     if (roundRaw) {

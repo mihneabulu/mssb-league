@@ -13,7 +13,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { parseCtimeAtOffset, RECORDING_TZ_OFFSET_MINUTES } from '../src/lib/mssb/decoded.ts';
+import {
+  parseCtimeAtOffset,
+  RECORDING_TZ_OFFSET_MINUTES,
+  resolveDecodedSide,
+} from '../src/lib/mssb/decoded.ts';
+import { buildRosterIndex } from '../src/lib/mssb/identify.ts';
 import { analyzeUpload } from '../src/lib/mssb/ingest.ts';
 import { CHARACTERS, STADIUMS } from '../src/lib/mssb/reference.ts';
 import type { RioGame } from '../src/lib/mssb/rio.ts';
@@ -159,5 +164,28 @@ describe('decoded export round-trip', () => {
     // And despite the ambiguity, charId 24 still lands in the box score.
     const all = [...result.boxscore.away, ...result.boxscore.home].map((p) => p.charId);
     expect(all).toContain(24);
+  });
+});
+
+describe('a team holding both characters the decoder renders alike', () => {
+  // Rio's decoder writes charId 24 (Noki(B)) and 26 (Noki(G)) under the same name. If one
+  // team drafts both, a name-keyed lookup maps both roster slots to the same id — which
+  // duplicated one character's stats, dropped the other's, and reported an exact match.
+  const index = buildRosterIndex([
+    { teamId: 1, slug: 'both-nokis', name: 'Both Nokis', charIds: [24, 26, 0, 1, 2, 3, 4, 5, 6] },
+    { teamId: 2, slug: 'other', name: 'Other', charIds: [30, 31, 32, 33, 34, 35, 36, 37, 38] },
+  ]);
+
+  it('assigns each id once and says which slot it guessed', () => {
+    // What the decoder emits: both Nokis appear as "Noki(G)".
+    const names = ['Noki(G)', 'Noki(G)', 'Mario', 'Luigi', 'DK', 'Diddy', 'Peach', 'Daisy', 'Yoshi'];
+    const side = resolveDecodedSide(names, index);
+
+    expect(side.name).toBe('Both Nokis');
+    expect(new Set(side.charIds).size, 'no id may be used twice').toBe(9);
+    expect(side.charIds).toContain(24);
+    expect(side.charIds).toContain(26);
+    expect(side.notes.length, 'the guessed slot must be reported').toBeGreaterThan(0);
+    expect(side.notes[0]).toMatch(/Noki/);
   });
 });

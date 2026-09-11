@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 
 import { audit, handle, InputError, required, seeOther, slugify, str } from '../../../lib/admin/respond.ts';
 import { createSeason } from '../../../lib/db/admin.ts';
+import { rebuildSnapshot } from '../../../lib/db/snapshot.ts';
 import { isValidSeasonSlug, RESERVED_SLUGS } from '../../../lib/links.ts';
 
 export const POST: APIRoute = async ({ request, locals }) =>
@@ -33,6 +34,12 @@ export const POST: APIRoute = async ({ request, locals }) =>
       { slug, name, shortLabel, startDate, rounds: 0 },
       cloneFrom,
     );
+
+    // Build the snapshot immediately. Without a row, getSeasonVersion returns 0 for the
+    // life of the season, so its pages cache under a key that never rotates — and the
+    // stored copy has a one-year max-age. The first edit would fix it by bumping the
+    // version, but until then a new season's pages would be frozen at creation.
+    await rebuildSnapshot(db, slug);
 
     await audit(db, actor.email, 'season.create', {
       seasonId,

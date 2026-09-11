@@ -95,7 +95,9 @@ export async function loadSeasonInput(
 
   const teams = teamRows.map((t) => {
     const teamId = int(t.id);
-    const captainCharId = int(t.captain_char_id);
+    // Nullable: a team exists before its draft. Coercing NULL through Number() gave 0,
+    // which is a real character — so an undrafted team showed Mario as its captain.
+    const captainCharId = t.captain_char_id === null ? null : int(t.captain_char_id);
     return {
       name: str(t.name),
       slug: str(t.slug),
@@ -103,7 +105,7 @@ export async function loadSeasonInput(
       captainCharId,
       // Portrait paths and character names are reference data, derived rather than
       // stored, so a rename in reference.ts cannot drift from the database.
-      captainPortrait: `portraits/${captainCharId}.png`,
+      captainPortrait: captainCharId === null ? null : `portraits/${captainCharId}.png`,
       stadium: stadiumName(int(t.stadium_id)),
       roster: (rosterByTeam.get(teamId) ?? []).map((r) => {
         const charId = int(r.char_id);

@@ -39,7 +39,7 @@ const pitRows: Row[] = roster
 ---
 <Base title={t.name} active="teams">
   <section class="thead card" style={`--team:${t.color}`}>
-    <img class="pf big" src={`/${t.captainPortrait}`} alt="" width={84} height={84} />
+    {t.captainPortrait && <img class="pf big" src={`/${t.captainPortrait}`} alt="" width={84} height={84} />}
     <div class="thead-main">
       <p class="kicker">Rank #{t.rank}</p>
       <h1>{t.name}</h1>

@@ -11,7 +11,7 @@ const teams = view.standingsTeams();
     {teams.map((t) => (
       <a class="card tcard" href={links.team(t.slug)} style={`--team:${t.color}`}>
         <div class="tcard-head">
-          <img class="pf" src={`/${t.captainPortrait}`} alt="" width={52} height={52} />
+          {t.captainPortrait && <img class="pf" src={`/${t.captainPortrait}`} alt="" width={52} height={52} />}
           <div>
             <div class="tname">{t.name}</div>
             <div class="muted trec">{t.record.w}–{t.record.l} · {pct3(t.record.pct)}</div>

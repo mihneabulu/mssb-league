@@ -8,7 +8,7 @@ const Tag = link && t ? 'a' : 'span';
 const href = link && t ? links.team(t.slug) : undefined;
 ---
 <Tag href={href} class="ti" style={`font-weight:${bold ? 800 : 600}`}>
-  {t && <img class="pf" src={`/${t.captainPortrait}`} alt="" width={size} height={size} loading="lazy" />}
+  {t?.captainPortrait && <img class="pf" src={`/${t.captainPortrait}`} alt="" width={size} height={size} loading="lazy" />}
   {t && <span class="chip" style={`background:${t.color}`}></span>}
   <span class="ti-name">{name}</span>
 </Tag>

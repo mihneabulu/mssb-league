@@ -39,14 +39,30 @@ const pitRows: Row[] = pitchers.map((c) => ({
 }));
 
 type Hi = { title: string; charId: number; value: string };
-const first = (ids: number[]) => ids[0];
+
+// Each highlight is resolved before it is built. The previous version dereferenced
+// byId.get(...)! inside every object literal and filtered afterwards, which is too late:
+// a season with no games has empty leader lists, so the lookup returned undefined and the
+// page threw. A board can also be empty mid-season, since avg/ops/era are filtered by
+// their minimum-AB and minimum-IP qualifiers while home runs are not.
+const highlight = (
+  title: string,
+  ids: number[] | undefined,
+  value: (c: (typeof chars)[number]) => string,
+): Hi | null => {
+  const c = ids?.length ? byId.get(ids[0]) : undefined;
+  return c ? { title, charId: c.charId, value: value(c) } : null;
+};
+
 const highlights: Hi[] = [
-  { title: 'Home runs', charId: first(data.leaders.batting.hr), value: `${byId.get(first(data.leaders.batting.hr))!.batting.hr} HR` },
-  { title: 'Batting avg', charId: first(data.leaders.batting.avg), value: byId.get(first(data.leaders.batting.avg))!.batting.avg.toFixed(3).replace(/^0/, '') },
-  { title: 'RBI', charId: first(data.leaders.batting.rbi), value: `${byId.get(first(data.leaders.batting.rbi))!.batting.rbi} RBI` },
-  { title: 'ERA', charId: first(data.leaders.pitching.era), value: byId.get(first(data.leaders.pitching.era))!.pitching.era.toFixed(2) },
-  { title: 'Strikeouts', charId: first(data.leaders.pitching.so), value: `${byId.get(first(data.leaders.pitching.so))!.pitching.so} K` },
-].filter((h) => h.charId !== undefined);
+  highlight('Home runs', data.leaders.batting.hr, (c) => `${c.batting.hr} HR`),
+  highlight('Batting avg', data.leaders.batting.avg, (c) =>
+    c.batting.avg.toFixed(3).replace(/^0/, ''),
+  ),
+  highlight('RBI', data.leaders.batting.rbi, (c) => `${c.batting.rbi} RBI`),
+  highlight('ERA', data.leaders.pitching.era, (c) => c.pitching.era.toFixed(2)),
+  highlight('Strikeouts', data.leaders.pitching.so, (c) => `${c.pitching.so} K`),
+].filter((h): h is Hi => h !== null);
 ---
 <Base title="Leaders" active="leaders">
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">⭐ League leaders</span></div>

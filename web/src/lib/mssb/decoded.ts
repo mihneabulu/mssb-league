@@ -82,7 +82,18 @@ export function resolveDecodedSide(names: string[], index: RosterIndex): Decoded
   const byName = new Map<string, number>();
   for (const id of best.charIds) byName.set(charName(id), id);
 
-  const charIds: (number | null)[] = names.map((n) => byName.get(n) ?? null);
+  // Each id may be claimed once. Rio's decoder renders some colour variants under a
+  // single name (charId 24 and 26 both appear as "Noki(G)"), so a team holding both would
+  // otherwise map both slots to the same id — duplicating one character's stats, losing
+  // the other's, and reporting an exact match. Leaving the second slot unresolved sends
+  // it through the elimination path below, which assigns the leftover id and says so.
+  const claimedNames = new Set<number>();
+  const charIds: (number | null)[] = names.map((n) => {
+    const id = byName.get(n);
+    if (id === undefined || claimedNames.has(id)) return null;
+    claimedNames.add(id);
+    return id;
+  });
 
   const claimed = new Set(charIds.filter((v): v is number => v !== null));
   const leftover = [...best.charIds].filter((id) => !claimed.has(id)).sort((a, b) => a - b);
