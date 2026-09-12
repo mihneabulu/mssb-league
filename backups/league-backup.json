@@ -12147,6 +12147,91 @@
           }
         }
       ]
+    },
+    {
+      "season": {
+        "slug": "s2",
+        "name": "MSB League #2",
+        "shortLabel": "MSB S2",
+        "startDate": "2026-09-21",
+        "rounds": 14
+      },
+      "teams": [
+        {
+          "name": "Big Papa",
+          "slug": "big-papa",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Booty Barn",
+          "slug": "booty-barn",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Flame Imp",
+          "slug": "flame-imp",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Great Aunt Edna",
+          "slug": "great-aunt-edna",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Lil Imp",
+          "slug": "lil-imp",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Droid",
+          "slug": "droid",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Damiano",
+          "slug": "damiano",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        },
+        {
+          "name": "Lustful Peanut",
+          "slug": "lustful-peanut",
+          "color": "#888888",
+          "captainCharId": null,
+          "captainPortrait": null,
+          "stadium": "Mario Stadium",
+          "roster": []
+        }
+      ],
+      "schedule": [],
+      "games": []
     }
   ]
 }
