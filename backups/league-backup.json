@@ -12161,55 +12161,331 @@
           "name": "Big Papa",
           "slug": "big-papa",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 2,
+          "captainPortrait": "portraits/2.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 2,
+              "name": "DK",
+              "captain": true,
+              "portrait": "portraits/2.png"
+            },
+            {
+              "charId": 4,
+              "name": "Peach",
+              "captain": false,
+              "portrait": "portraits/4.png"
+            },
+            {
+              "charId": 15,
+              "name": "Toadette",
+              "captain": false,
+              "portrait": "portraits/15.png"
+            },
+            {
+              "charId": 31,
+              "name": "Toad(G)",
+              "captain": false,
+              "portrait": "portraits/31.png"
+            },
+            {
+              "charId": 35,
+              "name": "Magikoopa(G)",
+              "captain": false,
+              "portrait": "portraits/35.png"
+            },
+            {
+              "charId": 37,
+              "name": "King Boo",
+              "captain": false,
+              "portrait": "portraits/37.png"
+            },
+            {
+              "charId": 38,
+              "name": "Petey",
+              "captain": false,
+              "portrait": "portraits/38.png"
+            },
+            {
+              "charId": 43,
+              "name": "Paratroopa(G)",
+              "captain": false,
+              "portrait": "portraits/43.png"
+            },
+            {
+              "charId": 46,
+              "name": "Shy Guy(G)",
+              "captain": false,
+              "portrait": "portraits/46.png"
+            }
+          ]
         },
         {
           "name": "Booty Barn",
           "slug": "booty-barn",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 9,
+          "captainPortrait": "portraits/9.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 0,
+              "name": "Mario",
+              "captain": false,
+              "portrait": "portraits/0.png"
+            },
+            {
+              "charId": 8,
+              "name": "Baby Luigi",
+              "captain": false,
+              "portrait": "portraits/8.png"
+            },
+            {
+              "charId": 9,
+              "name": "Bowser",
+              "captain": true,
+              "portrait": "portraits/9.png"
+            },
+            {
+              "charId": 12,
+              "name": "Koopa(G)",
+              "captain": false,
+              "portrait": "portraits/12.png"
+            },
+            {
+              "charId": 14,
+              "name": "Boo",
+              "captain": false,
+              "portrait": "portraits/14.png"
+            },
+            {
+              "charId": 30,
+              "name": "Toad(Y)",
+              "captain": false,
+              "portrait": "portraits/30.png"
+            },
+            {
+              "charId": 40,
+              "name": "Goomba",
+              "captain": false,
+              "portrait": "portraits/40.png"
+            }
+          ]
         },
         {
           "name": "Flame Imp",
           "slug": "flame-imp",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 3,
+          "captainPortrait": "portraits/3.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 3,
+              "name": "Diddy",
+              "captain": true,
+              "portrait": "portraits/3.png"
+            },
+            {
+              "charId": 5,
+              "name": "Daisy",
+              "captain": false,
+              "portrait": "portraits/5.png"
+            },
+            {
+              "charId": 24,
+              "name": "Noki(B)",
+              "captain": false,
+              "portrait": "portraits/24.png"
+            },
+            {
+              "charId": 36,
+              "name": "Magikoopa(Y)",
+              "captain": false,
+              "portrait": "portraits/36.png"
+            },
+            {
+              "charId": 48,
+              "name": "Dry Bones(Gy)",
+              "captain": false,
+              "portrait": "portraits/48.png"
+            },
+            {
+              "charId": 50,
+              "name": "Dry Bones(R)",
+              "captain": false,
+              "portrait": "portraits/50.png"
+            },
+            {
+              "charId": 53,
+              "name": "Bro(B)",
+              "captain": false,
+              "portrait": "portraits/53.png"
+            }
+          ]
         },
         {
           "name": "Great Aunt Edna",
           "slug": "great-aunt-edna",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 11,
+          "captainPortrait": "portraits/11.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 11,
+              "name": "Waluigi",
+              "captain": true,
+              "portrait": "portraits/11.png"
+            },
+            {
+              "charId": 17,
+              "name": "Birdo",
+              "captain": false,
+              "portrait": "portraits/17.png"
+            },
+            {
+              "charId": 18,
+              "name": "Monty",
+              "captain": false,
+              "portrait": "portraits/18.png"
+            },
+            {
+              "charId": 27,
+              "name": "Bro(H)",
+              "captain": false,
+              "portrait": "portraits/27.png"
+            },
+            {
+              "charId": 29,
+              "name": "Toad(B)",
+              "captain": false,
+              "portrait": "portraits/29.png"
+            },
+            {
+              "charId": 41,
+              "name": "Paragoomba",
+              "captain": false,
+              "portrait": "portraits/41.png"
+            },
+            {
+              "charId": 42,
+              "name": "Koopa(R)",
+              "captain": false,
+              "portrait": "portraits/42.png"
+            },
+            {
+              "charId": 52,
+              "name": "Bro(F)",
+              "captain": false,
+              "portrait": "portraits/52.png"
+            }
+          ]
         },
         {
           "name": "Lil Imp",
           "slug": "lil-imp",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 10,
+          "captainPortrait": "portraits/10.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 1,
+              "name": "Luigi",
+              "captain": false,
+              "portrait": "portraits/1.png"
+            },
+            {
+              "charId": 10,
+              "name": "Wario",
+              "captain": true,
+              "portrait": "portraits/10.png"
+            },
+            {
+              "charId": 16,
+              "name": "Shy Guy(R)",
+              "captain": false,
+              "portrait": "portraits/16.png"
+            },
+            {
+              "charId": 23,
+              "name": "Pianta(Y)",
+              "captain": false,
+              "portrait": "portraits/23.png"
+            },
+            {
+              "charId": 26,
+              "name": "Noki(G)",
+              "captain": false,
+              "portrait": "portraits/26.png"
+            },
+            {
+              "charId": 28,
+              "name": "Toadsworth",
+              "captain": false,
+              "portrait": "portraits/28.png"
+            },
+            {
+              "charId": 47,
+              "name": "Shy Guy(Bk)",
+              "captain": false,
+              "portrait": "portraits/47.png"
+            },
+            {
+              "charId": 49,
+              "name": "Dry Bones(G)",
+              "captain": false,
+              "portrait": "portraits/49.png"
+            }
+          ]
         },
         {
           "name": "Droid",
           "slug": "droid",
           "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "captainCharId": 6,
+          "captainPortrait": "portraits/6.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 6,
+              "name": "Yoshi",
+              "captain": true,
+              "portrait": "portraits/6.png"
+            },
+            {
+              "charId": 7,
+              "name": "Baby Mario",
+              "captain": false,
+              "portrait": "portraits/7.png"
+            },
+            {
+              "charId": 20,
+              "name": "Paratroopa(R)",
+              "captain": false,
+              "portrait": "portraits/20.png"
+            },
+            {
+              "charId": 21,
+              "name": "Pianta(B)",
+              "captain": false,
+              "portrait": "portraits/21.png"
+            },
+            {
+              "charId": 34,
+              "name": "Magikoopa(R)",
+              "captain": false,
+              "portrait": "portraits/34.png"
+            },
+            {
+              "charId": 39,
+              "name": "Dixie",
+              "captain": false,
+              "portrait": "portraits/39.png"
+            }
+          ]
         },
         {
           "name": "Damiano",
