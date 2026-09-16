@@ -7,7 +7,8 @@
         "name": "Mario Superstar Baseball League 2026 \u2014 Season 1",
         "shortLabel": "Season 1 \u00b7 2026",
         "startDate": "2026-06-29",
-        "rounds": 10
+        "rounds": 10,
+        "allowDuplicateChars": false
       },
       "teams": [
         {
@@ -12154,21 +12155,22 @@
         "name": "MSB League #2",
         "shortLabel": "MSB S2",
         "startDate": "2026-09-21",
-        "rounds": 14
+        "rounds": 14,
+        "allowDuplicateChars": true
       },
       "teams": [
         {
           "name": "Big Papa",
           "slug": "big-papa",
-          "color": "#888888",
-          "captainCharId": 2,
-          "captainPortrait": "portraits/2.png",
+          "color": "#76bb40",
+          "captainCharId": 43,
+          "captainPortrait": "portraits/43.png",
           "stadium": "Mario Stadium",
           "roster": [
             {
               "charId": 2,
               "name": "DK",
-              "captain": true,
+              "captain": false,
               "portrait": "portraits/2.png"
             },
             {
@@ -12210,7 +12212,7 @@
             {
               "charId": 43,
               "name": "Paratroopa(G)",
-              "captain": false,
+              "captain": true,
               "portrait": "portraits/43.png"
             },
             {
@@ -12224,7 +12226,7 @@
         {
           "name": "Booty Barn",
           "slug": "booty-barn",
-          "color": "#888888",
+          "color": "#563d00",
           "captainCharId": 9,
           "captainPortrait": "portraits/9.png",
           "stadium": "Mario Stadium",
@@ -12276,7 +12278,7 @@
         {
           "name": "Flame Imp",
           "slug": "flame-imp",
-          "color": "#888888",
+          "color": "#d38301",
           "captainCharId": 3,
           "captainPortrait": "portraits/3.png",
           "stadium": "Mario Stadium",
@@ -12294,6 +12296,12 @@
               "portrait": "portraits/5.png"
             },
             {
+              "charId": 7,
+              "name": "Baby Mario",
+              "captain": false,
+              "portrait": "portraits/7.png"
+            },
+            {
               "charId": 24,
               "name": "Noki(B)",
               "captain": false,
@@ -12304,6 +12312,12 @@
               "name": "Magikoopa(Y)",
               "captain": false,
               "portrait": "portraits/36.png"
+            },
+            {
+              "charId": 38,
+              "name": "Petey",
+              "captain": false,
+              "portrait": "portraits/38.png"
             },
             {
               "charId": 48,
@@ -12328,15 +12342,21 @@
         {
           "name": "Great Aunt Edna",
           "slug": "great-aunt-edna",
-          "color": "#888888",
-          "captainCharId": 11,
-          "captainPortrait": "portraits/11.png",
+          "color": "#e22400",
+          "captainCharId": 0,
+          "captainPortrait": "portraits/0.png",
           "stadium": "Mario Stadium",
           "roster": [
             {
+              "charId": 0,
+              "name": "Mario",
+              "captain": true,
+              "portrait": "portraits/0.png"
+            },
+            {
               "charId": 11,
               "name": "Waluigi",
-              "captain": true,
+              "captain": false,
               "portrait": "portraits/11.png"
             },
             {
@@ -12386,9 +12406,9 @@
         {
           "name": "Lil Imp",
           "slug": "lil-imp",
-          "color": "#888888",
-          "captainCharId": 10,
-          "captainPortrait": "portraits/10.png",
+          "color": "#7a219e",
+          "captainCharId": 11,
+          "captainPortrait": "portraits/11.png",
           "stadium": "Mario Stadium",
           "roster": [
             {
@@ -12402,6 +12422,12 @@
               "name": "Wario",
               "captain": true,
               "portrait": "portraits/10.png"
+            },
+            {
+              "charId": 11,
+              "name": "Waluigi",
+              "captain": false,
+              "portrait": "portraits/11.png"
             },
             {
               "charId": 16,
@@ -12444,15 +12470,21 @@
         {
           "name": "Droid",
           "slug": "droid",
-          "color": "#888888",
-          "captainCharId": 6,
-          "captainPortrait": "portraits/6.png",
+          "color": "#f5ec00",
+          "captainCharId": 39,
+          "captainPortrait": "portraits/39.png",
           "stadium": "Mario Stadium",
           "roster": [
             {
+              "charId": 2,
+              "name": "DK",
+              "captain": false,
+              "portrait": "portraits/2.png"
+            },
+            {
               "charId": 6,
               "name": "Yoshi",
-              "captain": true,
+              "captain": false,
               "portrait": "portraits/6.png"
             },
             {
@@ -12474,6 +12506,12 @@
               "portrait": "portraits/21.png"
             },
             {
+              "charId": 25,
+              "name": "Noki(R)",
+              "captain": false,
+              "portrait": "portraits/25.png"
+            },
+            {
               "charId": 34,
               "name": "Magikoopa(R)",
               "captain": false,
@@ -12482,7 +12520,7 @@
             {
               "charId": 39,
               "name": "Dixie",
-              "captain": false,
+              "captain": true,
               "portrait": "portraits/39.png"
             }
           ]
@@ -12490,23 +12528,428 @@
         {
           "name": "Damiano",
           "slug": "damiano",
-          "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "color": "#e292fe",
+          "captainCharId": 17,
+          "captainPortrait": "portraits/17.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 1,
+              "name": "Luigi",
+              "captain": false,
+              "portrait": "portraits/1.png"
+            },
+            {
+              "charId": 4,
+              "name": "Peach",
+              "captain": false,
+              "portrait": "portraits/4.png"
+            },
+            {
+              "charId": 5,
+              "name": "Daisy",
+              "captain": false,
+              "portrait": "portraits/5.png"
+            },
+            {
+              "charId": 15,
+              "name": "Toadette",
+              "captain": false,
+              "portrait": "portraits/15.png"
+            },
+            {
+              "charId": 17,
+              "name": "Birdo",
+              "captain": true,
+              "portrait": "portraits/17.png"
+            },
+            {
+              "charId": 22,
+              "name": "Pianta(R)",
+              "captain": false,
+              "portrait": "portraits/22.png"
+            },
+            {
+              "charId": 28,
+              "name": "Toadsworth",
+              "captain": false,
+              "portrait": "portraits/28.png"
+            },
+            {
+              "charId": 32,
+              "name": "Toad(P)",
+              "captain": false,
+              "portrait": "portraits/32.png"
+            },
+            {
+              "charId": 45,
+              "name": "Shy Guy(Y)",
+              "captain": false,
+              "portrait": "portraits/45.png"
+            }
+          ]
         },
         {
           "name": "Lustful Peanut",
           "slug": "lustful-peanut",
-          "color": "#888888",
-          "captainCharId": null,
-          "captainPortrait": null,
+          "color": "#01c7fc",
+          "captainCharId": 6,
+          "captainPortrait": "portraits/6.png",
           "stadium": "Mario Stadium",
-          "roster": []
+          "roster": [
+            {
+              "charId": 3,
+              "name": "Diddy",
+              "captain": false,
+              "portrait": "portraits/3.png"
+            },
+            {
+              "charId": 6,
+              "name": "Yoshi",
+              "captain": true,
+              "portrait": "portraits/6.png"
+            },
+            {
+              "charId": 10,
+              "name": "Wario",
+              "captain": false,
+              "portrait": "portraits/10.png"
+            },
+            {
+              "charId": 13,
+              "name": "Toad(R)",
+              "captain": false,
+              "portrait": "portraits/13.png"
+            },
+            {
+              "charId": 19,
+              "name": "Bowser Jr",
+              "captain": false,
+              "portrait": "portraits/19.png"
+            },
+            {
+              "charId": 33,
+              "name": "Magikoopa(B)",
+              "captain": false,
+              "portrait": "portraits/33.png"
+            },
+            {
+              "charId": 37,
+              "name": "King Boo",
+              "captain": false,
+              "portrait": "portraits/37.png"
+            },
+            {
+              "charId": 44,
+              "name": "Shy Guy(B)",
+              "captain": false,
+              "portrait": "portraits/44.png"
+            },
+            {
+              "charId": 51,
+              "name": "Dry Bones(B)",
+              "captain": false,
+              "portrait": "portraits/51.png"
+            }
+          ]
         }
       ],
-      "schedule": [],
+      "schedule": [
+        {
+          "round": 1,
+          "matchups": [
+            [
+              "Big Papa",
+              "Flame Imp"
+            ],
+            [
+              "Booty Barn",
+              "Damiano"
+            ],
+            [
+              "Droid",
+              "Lil Imp"
+            ],
+            [
+              "Great Aunt Edna",
+              "Lustful Peanut"
+            ]
+          ]
+        },
+        {
+          "round": 2,
+          "matchups": [
+            [
+              "Flame Imp",
+              "Big Papa"
+            ],
+            [
+              "Damiano",
+              "Booty Barn"
+            ],
+            [
+              "Lil Imp",
+              "Droid"
+            ],
+            [
+              "Lustful Peanut",
+              "Great Aunt Edna"
+            ]
+          ]
+        },
+        {
+          "round": 3,
+          "matchups": [
+            [
+              "Big Papa",
+              "Droid"
+            ],
+            [
+              "Damiano",
+              "Lil Imp"
+            ],
+            [
+              "Lustful Peanut",
+              "Flame Imp"
+            ],
+            [
+              "Booty Barn",
+              "Great Aunt Edna"
+            ]
+          ]
+        },
+        {
+          "round": 4,
+          "matchups": [
+            [
+              "Droid",
+              "Big Papa"
+            ],
+            [
+              "Lil Imp",
+              "Damiano"
+            ],
+            [
+              "Flame Imp",
+              "Lustful Peanut"
+            ],
+            [
+              "Great Aunt Edna",
+              "Booty Barn"
+            ]
+          ]
+        },
+        {
+          "round": 5,
+          "matchups": [
+            [
+              "Big Papa",
+              "Great Aunt Edna"
+            ],
+            [
+              "Lil Imp",
+              "Flame Imp"
+            ],
+            [
+              "Droid",
+              "Booty Barn"
+            ],
+            [
+              "Damiano",
+              "Lustful Peanut"
+            ]
+          ]
+        },
+        {
+          "round": 6,
+          "matchups": [
+            [
+              "Great Aunt Edna",
+              "Big Papa"
+            ],
+            [
+              "Flame Imp",
+              "Lil Imp"
+            ],
+            [
+              "Booty Barn",
+              "Droid"
+            ],
+            [
+              "Lustful Peanut",
+              "Damiano"
+            ]
+          ]
+        },
+        {
+          "round": 7,
+          "matchups": [
+            [
+              "Big Papa",
+              "Booty Barn"
+            ],
+            [
+              "Flame Imp",
+              "Lustful Peanut"
+            ],
+            [
+              "Great Aunt Edna",
+              "Damiano"
+            ],
+            [
+              "Lil Imp",
+              "Droid"
+            ]
+          ]
+        },
+        {
+          "round": 8,
+          "matchups": [
+            [
+              "Booty Barn",
+              "Big Papa"
+            ],
+            [
+              "Lustful Peanut",
+              "Flame Imp"
+            ],
+            [
+              "Damiano",
+              "Great Aunt Edna"
+            ],
+            [
+              "Droid",
+              "Lil Imp"
+            ]
+          ]
+        },
+        {
+          "round": 9,
+          "matchups": [
+            [
+              "Big Papa",
+              "Damiano"
+            ],
+            [
+              "Lustful Peanut",
+              "Droid"
+            ],
+            [
+              "Booty Barn",
+              "Lil Imp"
+            ],
+            [
+              "Flame Imp",
+              "Great Aunt Edna"
+            ]
+          ]
+        },
+        {
+          "round": 10,
+          "matchups": [
+            [
+              "Damiano",
+              "Big Papa"
+            ],
+            [
+              "Droid",
+              "Lustful Peanut"
+            ],
+            [
+              "Lil Imp",
+              "Booty Barn"
+            ],
+            [
+              "Great Aunt Edna",
+              "Flame Imp"
+            ]
+          ]
+        },
+        {
+          "round": 11,
+          "matchups": [
+            [
+              "Big Papa",
+              "Lil Imp"
+            ],
+            [
+              "Droid",
+              "Great Aunt Edna"
+            ],
+            [
+              "Damiano",
+              "Flame Imp"
+            ],
+            [
+              "Lustful Peanut",
+              "Booty Barn"
+            ]
+          ]
+        },
+        {
+          "round": 12,
+          "matchups": [
+            [
+              "Lil Imp",
+              "Big Papa"
+            ],
+            [
+              "Great Aunt Edna",
+              "Droid"
+            ],
+            [
+              "Flame Imp",
+              "Damiano"
+            ],
+            [
+              "Booty Barn",
+              "Lustful Peanut"
+            ]
+          ]
+        },
+        {
+          "round": 13,
+          "matchups": [
+            [
+              "Big Papa",
+              "Lustful Peanut"
+            ],
+            [
+              "Great Aunt Edna",
+              "Lil Imp"
+            ],
+            [
+              "Damiano",
+              "Droid"
+            ],
+            [
+              "Booty Barn",
+              "Flame Imp"
+            ]
+          ]
+        },
+        {
+          "round": 14,
+          "matchups": [
+            [
+              "Lustful Peanut",
+              "Big Papa"
+            ],
+            [
+              "Lil Imp",
+              "Great Aunt Edna"
+            ],
+            [
+              "Droid",
+              "Damiano"
+            ],
+            [
+              "Flame Imp",
+              "Booty Barn"
+            ]
+          ]
+        }
+      ],
       "games": []
     }
   ]
