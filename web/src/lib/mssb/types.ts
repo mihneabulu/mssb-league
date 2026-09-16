@@ -112,6 +112,13 @@ export type Game = {
 };
 
 export type CharAgg = {
+  /**
+   * Identifies this stat line within the season. `"12"` — the character id as a string —
+   * while characters are exclusive, `"flame-imp:12"` once a season allows the same
+   * character on several teams and one charId no longer means one line. Leaderboards
+   * reference this rather than charId for exactly that reason.
+   */
+  key: string;
   charId: number;
   name: string;
   team: string | null;
@@ -132,6 +139,13 @@ export type SeasonMeta = {
   shortLabel: string;
   startDate: string;
   rounds: number;
+  /**
+   * Whether this season's draft may put one character on several teams. Per season
+   * because it is a rule the league picks per draft: Season 1 drafted from an exclusive
+   * pool, a later one wanted duplicates. It changes what a "character" means in the
+   * stats — see CharAgg.key.
+   */
+  allowDuplicateChars: boolean;
 };
 
 export type SeasonSnapshot = {
@@ -142,9 +156,10 @@ export type SeasonSnapshot = {
   games: Game[];
   schedule: ScheduleRound[];
   characters: CharAgg[];
+  /** Ordered CharAgg.key values, not character ids. */
   leaders: {
-    batting: Record<string, number[]>;
-    pitching: Record<string, number[]>;
+    batting: Record<string, string[]>;
+    pitching: Record<string, string[]>;
   };
   stadiums: { byId: Record<string, string> };
   stadiumWarnings: string[];

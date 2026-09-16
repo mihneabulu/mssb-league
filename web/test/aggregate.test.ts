@@ -23,6 +23,7 @@ const season = {
   shortLabel: 'Test',
   startDate: '2026-06-29',
   rounds: 4,
+  allowDuplicateChars: false,
 };
 
 function player(charId: number, bat: Partial<BattingCounts> = {}, pit: Partial<PitchingCounts> = {}): BoxPlayer {
@@ -82,9 +83,18 @@ function game(
   };
 }
 
-function build(teams: SeasonInput['teams'], games: GameInput[]) {
+function build(
+  teams: SeasonInput['teams'],
+  games: GameInput[],
+  opts: { allowDuplicateChars?: boolean } = {},
+) {
   return buildSeasonSnapshot(
-    { season, teams, schedule: [], games },
+    {
+      season: { ...season, allowDuplicateChars: opts.allowDuplicateChars ?? false },
+      teams,
+      schedule: [],
+      games,
+    },
     { generatedAt: 'fixed' },
   );
 }
@@ -171,12 +181,14 @@ describe('leaderboard qualifiers', () => {
       }),
     ]);
 
+    // Boards hold CharAgg keys, which in a season without duplicates is the character
+    // id written as a string.
     const avgBoard = snap.leaders.batting.avg;
-    expect(avgBoard, 'a 1-for-1 hitter must not top the average board').not.toContain(0);
-    expect(avgBoard).toContain(1);
+    expect(avgBoard, 'a 1-for-1 hitter must not top the average board').not.toContain('0');
+    expect(avgBoard).toContain('1');
 
     // Counting stats have no qualifier, so the same player still appears there.
-    expect(snap.leaders.batting.hits).toContain(0);
+    expect(snap.leaders.batting.hits).toContain('0');
   });
 
   it('excludes sub-1-IP pitchers from ERA and WHIP', () => {
@@ -191,8 +203,8 @@ describe('leaderboard qualifiers', () => {
         }),
       }),
     ]);
-    expect(snap.leaders.pitching.era).not.toContain(0);
-    expect(snap.leaders.pitching.era).toContain(1);
+    expect(snap.leaders.pitching.era).not.toContain('0');
+    expect(snap.leaders.pitching.era).toContain('1');
   });
 });
 

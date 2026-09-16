@@ -7,7 +7,7 @@
 
 import { InputError, now, safeColor, slugify } from '../admin/respond.ts';
 import type { GeneratedRound } from '../admin/schedule.ts';
-import { CHARACTER_COUNT } from '../mssb/reference.ts';
+import { CHARACTER_COUNT, CHARACTERS } from '../mssb/reference.ts';
 import type { Executable, Row, Statement } from './queries.ts';
 
 /** D1 allows 100 bound parameters per query, so multi-row inserts are chunked. */
@@ -94,13 +94,74 @@ export async function makeCurrent(db: Executable, seasonId: number): Promise<voi
 export async function updateSeason(
   db: Executable,
   seasonId: number,
-  input: { name: string; shortLabel: string; startDate: string; rounds: number; status: string },
+  input: {
+    name: string;
+    shortLabel: string;
+    startDate: string;
+    rounds: number;
+    status: string;
+    allowDuplicateChars: boolean;
+  },
 ): Promise<void> {
+  // First, because it is the one part that can refuse.
+  await setDuplicateChars(db, seasonId, input.allowDuplicateChars);
   await db.run(
     `UPDATE seasons SET name = ?, short_label = ?, start_date = ?, rounds = ?, status = ?, updated_at = ?
      WHERE id = ?`,
     [input.name, input.shortLabel, input.startDate, input.rounds, input.status, now(), seasonId],
   );
+}
+
+/**
+ * Switch a season between an exclusive draft and one that allows duplicates.
+ *
+ * `roster_slots.dup_scope` is what the unique index keys on, so the season's flag alone
+ * is not the rule — the column is. They are written together, here and nowhere else, so
+ * the two cannot drift.
+ *
+ * Turning duplicates off again is refused while any character is on two teams, because
+ * the alternative is an opaque constraint failure that names a row id instead of saying
+ * which characters are the problem.
+ */
+export async function setDuplicateChars(
+  db: Executable,
+  seasonId: number,
+  allow: boolean,
+): Promise<void> {
+  const current = await db.all(`SELECT allow_duplicate_chars FROM seasons WHERE id = ?`, [seasonId]);
+  if (!current[0] || Boolean(Number(current[0].allow_duplicate_chars)) === allow) return;
+
+  if (!allow) {
+    const clashes = await db.all(
+      `SELECT r.char_id, GROUP_CONCAT(t.name, ', ') AS teams
+       FROM roster_slots r JOIN teams t ON t.id = r.team_id
+       WHERE r.season_id = ?
+       GROUP BY r.char_id HAVING COUNT(*) > 1
+       ORDER BY r.char_id`,
+      [seasonId],
+    );
+    if (clashes.length) {
+      const listed = clashes
+        .slice(0, 4)
+        .map((c) => `${CHARACTERS[Number(c.char_id)] ?? `#${c.char_id}`} (${c.teams})`)
+        .join('; ');
+      const more = clashes.length > 4 ? `, and ${clashes.length - 4} more` : '';
+      throw new InputError(
+        `These characters are on more than one team, so duplicates cannot be turned off yet: ${listed}${more}. Drop the extra picks first.`,
+      );
+    }
+  }
+
+  await db.batch([
+    {
+      sql: `UPDATE roster_slots SET dup_scope = ${allow ? 'team_id' : '0'} WHERE season_id = ?`,
+      params: [seasonId],
+    },
+    {
+      sql: `UPDATE seasons SET allow_duplicate_chars = ?, updated_at = ? WHERE id = ?`,
+      params: [allow ? 1 : 0, now(), seasonId],
+    },
+  ]);
 }
 
 export async function deleteSeason(db: Executable, seasonId: number): Promise<void> {
@@ -208,7 +269,11 @@ export async function deleteTeam(db: Executable, seasonId: number, teamId: numbe
 
 export type RosterOwner = { charId: number; teamId: number; teamName: string; color: string };
 
-/** Who owns each drafted character this season — drives the disabled cells in the grid. */
+/**
+ * Who owns each drafted character this season — drives the grid's disabled cells, and
+ * with duplicates allowed, the "also on ..." note instead. One character can appear
+ * more than once, so this is a list rather than a map.
+ */
 export async function rosterOwnership(db: Executable, seasonId: number): Promise<RosterOwner[]> {
   const rows = await db.all(
     `SELECT r.char_id, r.team_id, t.name, t.color
@@ -242,9 +307,14 @@ export async function saveRoster(
     throw new InputError('The captain must be one of the selected characters.');
   }
 
-  // The (season_id, char_id) primary key makes double-drafting a database error, but
-  // checking first turns it into a sentence a human can act on.
-  if (unique.length) {
+  const seasonRows = await db.all(`SELECT allow_duplicate_chars FROM seasons WHERE id = ?`, [seasonId]);
+  const allowDuplicates = Boolean(Number(seasonRows[0]?.allow_duplicate_chars ?? 0));
+
+  // The unique index on (season_id, char_id, dup_scope) makes double-drafting a database
+  // error, but checking first turns it into a sentence a human can act on. When the
+  // season allows duplicates there is nothing to check: another team holding the same
+  // character is the point.
+  if (unique.length && !allowDuplicates) {
     const placeholders = unique.map(() => '?').join(',');
     const taken = await db.all(
       `SELECT r.char_id, t.name FROM roster_slots r JOIN teams t ON t.id = r.team_id
@@ -259,20 +329,24 @@ export async function saveRoster(
     }
   }
 
+  // dup_scope is the column the unique index keys on: 0 keeps the character exclusive to
+  // the season, team_id narrows exclusivity to this team. See migration 0002.
+  const dupScope = allowDuplicates ? teamId : 0;
   const rows = unique.map((charId) => [
     seasonId,
     teamId,
     charId,
     captainCharId === charId ? 1 : 0,
+    dupScope,
   ]);
 
   await db.batch([
     { sql: `DELETE FROM roster_slots WHERE season_id = ? AND team_id = ?`, params: [seasonId, teamId] },
     ...chunkedInsert(
-      `INSERT INTO roster_slots (season_id, team_id, char_id, is_captain)`,
-      '(?, ?, ?, ?)',
+      `INSERT INTO roster_slots (season_id, team_id, char_id, is_captain, dup_scope)`,
+      '(?, ?, ?, ?, ?)',
       rows,
-      4,
+      5,
     ),
     {
       sql: `UPDATE teams SET captain_char_id = ?, updated_at = ? WHERE id = ?`,

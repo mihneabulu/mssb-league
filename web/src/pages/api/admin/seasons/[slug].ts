@@ -111,10 +111,42 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     const startDate = required(form, 'startDate', 'First day');
     const status = str(form, 'status') || 'draft';
     const rounds = optionalInt(form, 'rounds') ?? 0;
+    // An unchecked checkbox is simply absent from the post, which is what makes this
+    // work without JavaScript.
+    const allowDuplicateChars = form.get('allowDuplicateChars') !== null;
 
-    await updateSeason(db, seasonId, { name, shortLabel, startDate, rounds, status });
+    const before = await db.all(`SELECT allow_duplicate_chars FROM seasons WHERE id = ?`, [seasonId]);
+    const wasAllowed = Boolean(Number(before[0]?.allow_duplicate_chars ?? 0));
+
+    await updateSeason(db, seasonId, {
+      name,
+      shortLabel,
+      startDate,
+      rounds,
+      status,
+      allowDuplicateChars,
+    });
+    // Duplicates change what one stat line means, so the season has to be re-aggregated
+    // rather than merely re-saved.
     await rebuildSnapshot(db, slug);
-    await audit(db, actor.email, 'season.update', { seasonId, entity: 'season', entityId: slug });
+    await audit(db, actor.email, 'season.update', {
+      seasonId,
+      entity: 'season',
+      entityId: slug,
+      detail:
+        wasAllowed === allowDuplicateChars
+          ? undefined
+          : `duplicate characters ${allowDuplicateChars ? 'allowed' : 'no longer allowed'}`,
+    });
+
+    if (wasAllowed !== allowDuplicateChars) {
+      return seeOther(
+        back,
+        allowDuplicateChars
+          ? 'Season details saved. Teams can now draft the same character — each team keeps its own stat line for them.'
+          : 'Season details saved. Characters are exclusive again: one team each.',
+      );
+    }
     return seeOther(back, 'Season details saved.');
   });
 };

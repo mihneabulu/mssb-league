@@ -25,12 +25,29 @@ anything the parser is unsure about is flagged rather than guessed silently — 
 that only partly matches, a game already recorded, a file from a decoded export, a game
 played at the wrong stadium.
 
+### Drafting the same character twice
+
+By default a character belongs to one team for the whole season — pick Mario and nobody
+else can have him. A season can turn that off: **Seasons** → pick a season → *Let teams
+draft the same character*. Then any team can pick anyone, and each team keeps its own
+stat line for them, so two Marios appear on the leaderboards with their own numbers and
+their own team beside the name.
+
+It can be switched back, but not while a character is actually on two teams — the site
+says which ones to drop first.
+
 ### How teams are worked out
 
 Project Rio logs both managers under the same account, so a side is identified by its
 drafted roster — the exact set of nine character ids. That is why the draft has to be
 entered before games can be uploaded, and why a substitute makes a game show up as
 "check this" rather than an exact match.
+
+That works because rosters normally have nothing in common. In a season that allows
+duplicates they overlap on purpose, so anything short of an exact match is held for
+review rather than guessed — including every decoded export, which identifies players by
+name against a single team's roster and so cannot tell two teams sharing a character
+apart at all.
 
 ## How it is put together
 

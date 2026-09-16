@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { buildSeasonSnapshot } from '../src/lib/mssb/aggregate.ts';
 import { CHARACTERS } from '../src/lib/mssb/reference.ts';
 import { diff, formatDiffs } from './diff.ts';
+import { asCharIds, stripKeys } from './golden.ts';
 import { loadLegacySeason, REPO_ROOT } from './legacy.ts';
 
 const golden = JSON.parse(
@@ -20,11 +21,18 @@ const golden = JSON.parse(
  * tolerance. Anything NOT listed here must match exactly.
  *
  *   generatedAt        — injected, so the comparison is deterministic
- *   season.slug/.shortLabel — new fields; the three original fields are still compared
+ *   season.slug/.shortLabel/.allowDuplicateChars — new fields; the three original
+ *                        fields are still compared
  *   games[].week       — replaced by games[].round (a stored fact, not a folder name)
  *   games[].file       — results/ paths no longer exist
  *   stadiums.note/.names — moved into reference.ts; byId is still compared in full
  *   characterNames     — moved into reference.ts; compared separately below
+ *   characters[].key   — new identifier, added so a season that allows duplicates can
+ *                        tell one team's Mario from another's. In a season without
+ *                        them it is the character id as a string, which is why the
+ *                        leaderboards below are compared through Number() rather than
+ *                        skipped: every id build.py picked must still be picked, in
+ *                        the same order.
  */
 const { input, roundReport } = loadLegacySeason();
 const snapshot = buildSeasonSnapshot(input, {
@@ -67,12 +75,19 @@ describe('Season 1 parity with build.py', () => {
   });
 
   it('reproduces every character stat line', () => {
-    const diffs = diff(golden.characters, snapshot.characters, 'characters');
+    const diffs = diff(golden.characters, stripKeys(snapshot.characters), 'characters');
     expect(diffs, formatDiffs(diffs)).toEqual([]);
   });
 
+  it('keys every character stat line by its character id', () => {
+    // The invariant the leaderboard comparison below rests on, stated on its own.
+    expect(snapshot.characters.map((c) => c.key)).toEqual(
+      snapshot.characters.map((c) => String(c.charId)),
+    );
+  });
+
   it('reproduces every leaderboard', () => {
-    const diffs = diff(golden.leaders, snapshot.leaders, 'leaders');
+    const diffs = diff(golden.leaders, asCharIds(snapshot.leaders), 'leaders');
     expect(diffs, formatDiffs(diffs)).toEqual([]);
   });
 

@@ -7,7 +7,11 @@ import { portrait } from '../../lib/format.ts';
 const { view, links } = Astro.locals;
 const data = view.data;
 const chars = data.characters;
-const byId = new Map(chars.map((c) => [c.charId, c]));
+// Keyed by CharAgg.key, not charId: when a season allows duplicates the same character
+// has one line per team and only the key tells them apart.
+const byKey = new Map(chars.map((c) => [c.key, c]));
+// With duplicates there are two Marios on the board, so the rows have to say whose.
+const showTeam = data.season.allowDuplicateChars;
 
 const batters = chars.filter((c) => c.batting.pa > 0);
 const pitchers = chars.filter((c) => c.pitching.wasPitcher > 0);
@@ -38,7 +42,7 @@ const pitRows: Row[] = pitchers.map((c) => ({
     k9: c.pitching.k9, h: c.pitching.h, bb: c.pitching.bb, hr: c.pitching.hr },
 }));
 
-type Hi = { title: string; charId: number; value: string };
+type Hi = { title: string; key: string; value: string };
 
 // Each highlight is resolved before it is built. The previous version dereferenced
 // byId.get(...)! inside every object literal and filtered afterwards, which is too late:
@@ -47,11 +51,11 @@ type Hi = { title: string; charId: number; value: string };
 // their minimum-AB and minimum-IP qualifiers while home runs are not.
 const highlight = (
   title: string,
-  ids: number[] | undefined,
+  keys: string[] | undefined,
   value: (c: (typeof chars)[number]) => string,
 ): Hi | null => {
-  const c = ids?.length ? byId.get(ids[0]) : undefined;
-  return c ? { title, charId: c.charId, value: value(c) } : null;
+  const c = keys?.length ? byKey.get(keys[0]) : undefined;
+  return c ? { title, key: c.key, value: value(c) } : null;
 };
 
 const highlights: Hi[] = [
@@ -68,13 +72,14 @@ const highlights: Hi[] = [
   <div class="section-head" style="margin-top:1.4rem"><span class="pill">⭐ League leaders</span></div>
   <div class="hi-grid">
     {highlights.map((h) => {
-      const c = byId.get(h.charId)!;
+      const c = byKey.get(h.key)!;
       const t = c.team ? view.team(c.team) : undefined;
       return (
         <a class="card hi" href={t ? links.team(t.slug) : '#'} style={`--team:${t?.color ?? 'var(--line)'}`}>
           <span class="hi-title">{h.title}</span>
-          <img class="pf hi-pf" src={portrait(h.charId)} alt="" width={54} height={54} />
+          <img class="pf hi-pf" src={portrait(c.charId)} alt="" width={54} height={54} />
           <span class="hi-name">{c.name}</span>
+          {showTeam && c.team && <span class="hi-team muted">{c.team}</span>}
           <span class="hi-val">{h.value}</span>
         </a>
       );
@@ -83,10 +88,10 @@ const highlights: Hi[] = [
 
   <div class="section-head"><span class="pill">🏏 Batting</span></div>
   <p class="muted" style="margin-top:-.5rem;font-size:.85rem">Click any column to sort.</p>
-  <StatTable columns={batCols} rows={batRows} sortKey="ops" sortDir="desc" kind="batting" />
+  <StatTable columns={batCols} rows={batRows} sortKey="ops" sortDir="desc" kind="batting" showTeam={showTeam} />
 
   <div class="section-head"><span class="pill">🔥 Pitching</span></div>
-  <StatTable columns={pitCols} rows={pitRows} sortKey="so" sortDir="desc" kind="pitching" />
+  <StatTable columns={pitCols} rows={pitRows} sortKey="so" sortDir="desc" kind="pitching" showTeam={showTeam} />
 </Base>
 
 <style>
@@ -96,5 +101,6 @@ const highlights: Hi[] = [
   .hi-title { font-family: var(--font-display); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
   .hi-pf { width: 54px; height: 54px; }
   .hi-name { font-weight: 800; }
+  .hi-team { font-size: .72rem; }
   .hi-val { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; }
 </style>

@@ -30,9 +30,11 @@ export interface Executable extends Queryable {
 }
 
 export const SQL = {
-  season: `SELECT id, slug, name, short_label, start_date, rounds, status, is_current
+  season: `SELECT id, slug, name, short_label, start_date, rounds, status, is_current,
+                  allow_duplicate_chars
            FROM seasons WHERE slug = ?`,
-  currentSeason: `SELECT id, slug, name, short_label, start_date, rounds, status, is_current
+  currentSeason: `SELECT id, slug, name, short_label, start_date, rounds, status, is_current,
+                         allow_duplicate_chars
                   FROM seasons WHERE is_current = 1`,
   seasonList: `SELECT slug, short_label, status, is_current FROM seasons
                ORDER BY start_date DESC, id DESC`,
@@ -160,6 +162,7 @@ export async function loadSeasonInput(
       shortLabel: str(season.short_label),
       startDate: str(season.start_date),
       rounds: int(season.rounds),
+      allowDuplicateChars: bool(season.allow_duplicate_chars),
     },
     teams,
     schedule,

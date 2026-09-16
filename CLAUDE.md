@@ -48,6 +48,18 @@ These have each already caused a bug. They are not obvious from reading the code
   `d1 execute --file`; local D1 accepts them. Seed files must not contain them.
 - **A matchup is `[away, home]`.** The schedule page renders home first, which makes the
   data look reversed.
+- **A character id is not a player** once `seasons.allow_duplicate_chars` is on. Two
+  teams can both draft Mario, and then each has its own stat line. Identify a line by
+  `CharAgg.key` (`"12"`, or `"flame-imp:12"` with duplicates), never by `charId` — that
+  is what leaderboards hold. `characterKey()` in `aggregate.ts` builds it.
+- **`roster_slots.dup_scope` is the constraint, not the season flag.** It is 0 while
+  characters are exclusive and the team's id once they are not, so
+  `UNIQUE (season_id, char_id, dup_scope)` enforces both rules. Write the two together
+  through `setDuplicateChars()`; setting the flag alone changes nothing.
+- **A deploy does not rebuild snapshots.** A stored payload was written by the previous
+  version of the code, so a change to the snapshot's shape has to be readable by the new
+  one — `upgrade()` in `view.ts` is where that happens. Deleting the rows instead would
+  freeze those seasons' cache keys at version 0.
 - **Service-token JWTs carry no `email` claim** — they have `common_name` and an empty
   `sub`. They are also restricted to safe HTTP methods.
 - **Cloudflare strips `ETag`** from Worker responses on this plan, and a cached entry must
@@ -59,6 +71,12 @@ These have each already caused a bug. They are not obvious from reading the code
 One row per season in `season_snapshots` holds the whole aggregate (34 KB stored, 5.6 KB
 gzipped for Season 1). Public pages read only that row plus the season list. Box scores
 live in `games.box_json` and are fetched per game.
+
+A season is either an exclusive draft (one team per character, Season 1) or one that
+allows duplicates — a per-season flag, because the league picks per draft. With
+duplicates on, stats are accumulated per (team, character) rather than per character, and
+the upload review stops trusting anything but an exact roster match, since overlapping
+rosters are then expected rather than a red flag.
 
 ## D1 limits that shape the code
 

@@ -3,9 +3,11 @@ import { portrait, STAT_INFO } from '../lib/format.ts';
 export type Col = { key: string; label: string; fmt?: 'int' | 'dp3' | 'dp2'; sort?: 'asc' | 'desc' };
 // team is nullable: a character can appear in stats without being on a roster.
 export type Row = { charId: number; name: string; team: string | null; values: Record<string, number> };
-const { columns, rows, sortKey, sortDir = 'desc', caption, kind = 'batting' } = Astro.props as {
+// showTeam: a season that allows duplicates lists the same character once per team, so
+// the name alone stops identifying a row and the team has to be spelled out.
+const { columns, rows, sortKey, sortDir = 'desc', caption, kind = 'batting', showTeam = false } = Astro.props as {
   columns: Col[]; rows: Row[]; sortKey?: string; sortDir?: 'asc' | 'desc'; caption?: string;
-  kind?: 'batting' | 'pitching';
+  kind?: 'batting' | 'pitching'; showTeam?: boolean;
 };
 const { view, links } = Astro.locals;
 const info = STAT_INFO[kind];
@@ -34,12 +36,13 @@ const initialKey = sortKey ?? columns[0]?.key;
       {rows.map((r) => {
         const t = r.team ? view.team(r.team) : undefined;
         return (
-          <tr data-name={r.name}>
+          <tr data-name={showTeam ? `${r.name} ${r.team ?? ''}` : r.name}>
             <td>
               <a href={t ? links.team(t.slug) : '#'} class="player">
                 <img class="pf" src={portrait(r.charId)} alt="" width={28} height={28} loading="lazy" />
                 <span class="chip" style={`background:${t?.color ?? 'transparent'}`}></span>
                 <span class="pname">{r.name}</span>
+                {showTeam && r.team && <span class="pteam">{r.team}</span>}
               </a>
             </td>
             {columns.map((c) => (
@@ -56,6 +59,7 @@ const initialKey = sortKey ?? columns[0]?.key;
   .cap { padding: .7rem 1rem .2rem; font-weight: 600; font-size: 1.05rem; }
   .player { display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; color: inherit; font-weight: 700; }
   .player:hover .pname { text-decoration: underline; }
+  .pteam { font-weight: 600; font-size: .76rem; color: var(--ink-soft); }
   .grid td:first-child, .grid th:first-child { padding-left: 1rem; }
   .grid td:last-child, .grid th:last-child { padding-right: 1rem; }
 </style>

@@ -41,13 +41,31 @@ export type BuildOptions = {
   generatedAt?: string;
 };
 
+/**
+ * The identity of one stat line.
+ *
+ * While a season keeps characters exclusive this is just the character id, so the
+ * snapshot reads exactly as it always has. Once a season allows duplicates one charId
+ * can be two different players on two different teams, so the owning team's slug comes
+ * along and each team's Mario accumulates on his own.
+ */
+export function characterKey(
+  charId: number,
+  teamSlug: string | null,
+  allowDuplicates: boolean,
+): string {
+  return allowDuplicates && teamSlug !== null ? `${teamSlug}:${charId}` : String(charId);
+}
+
 export function buildSeasonSnapshot(
   input: SeasonInput,
   opts: BuildOptions = {},
 ): SeasonSnapshot {
   const { includeBoxscores = false, generatedAt = new Date().toISOString() } = opts;
 
+  const dup = input.season.allowDuplicateChars;
   const teamNames = input.teams.map((t) => t.name);
+  const slugByTeamName = new Map(input.teams.map((t) => [t.name, t.slug]));
 
   const record = new Map(
     teamNames.map((n) => [n, { w: 0, l: 0, t: 0, rf: 0, ra: 0 }]),
@@ -57,22 +75,28 @@ export function buildSeasonSnapshot(
 
   // Only characters actually involved this season, rather than build.py's hardcoded
   // range(54): a season with a different team count would not exhaust the pool.
-  const charBat = new Map<number, BattingCounts>();
-  const charPit = new Map<number, PitchingCounts>();
-  const charTeam = new Map<number, string>();
-  const seenChars = new Set<number>();
+  //
+  // Keyed by CharAgg.key rather than charId: with duplicates allowed, "character 12"
+  // is not one player, so one bucket per (team, character) is the only honest answer.
+  const charBat = new Map<string, BattingCounts>();
+  const charPit = new Map<string, PitchingCounts>();
+  const charMeta = new Map<string, { charId: number; team: string | null }>();
 
-  const touch = (charId: number) => {
-    if (!charBat.has(charId)) charBat.set(charId, newBatting());
-    if (!charPit.has(charId)) charPit.set(charId, newPitching());
-    seenChars.add(charId);
+  const touch = (charId: number, teamName: string | null): string => {
+    // Off a roster and off a team, a line has no slug to hang on and falls back to the
+    // plain character id, which is where a substitute's stats land.
+    const key = characterKey(charId, teamName === null ? null : slugByTeamName.get(teamName) ?? null, dup);
+    if (!charBat.has(key)) charBat.set(key, newBatting());
+    if (!charPit.has(key)) charPit.set(key, newPitching());
+    // A character's team comes from the draft, so the first roster to claim them wins
+    // and a later box score never relabels them. Without duplicates that also means a
+    // substitute keeps their own team's colours, exactly as build.py had it.
+    if (!charMeta.has(key)) charMeta.set(key, { charId, team: teamName });
+    return key;
   };
 
   for (const t of input.teams) {
-    for (const m of t.roster) {
-      charTeam.set(m.charId, t.name);
-      touch(m.charId);
-    }
+    for (const m of t.roster) touch(m.charId, t.name);
   }
 
   const homeStadium = new Map(input.teams.map((t) => [t.name, t.stadium]));
@@ -114,13 +138,15 @@ export function buildSeasonSnapshot(
       ['home', g.home],
     ] as const) {
       for (const player of g.boxscore[side]) {
-        touch(player.charId);
+        // With duplicates allowed the side that fielded them decides whose line this is;
+        // without, every appearance folds into the one line that charId owns.
+        const key = touch(player.charId, dup ? teamName : null);
         // Fold the player's already-derived single-game line back into the running
         // totals. Counting stats are plain sums; rates are recomputed at the end.
         foldBatting(teamBat.get(teamName)!, player.batting);
-        foldBatting(charBat.get(player.charId)!, player.batting);
+        foldBatting(charBat.get(key)!, player.batting);
         foldPitching(teamPit.get(teamName)!, player.pitching);
-        foldPitching(charPit.get(player.charId)!, player.pitching);
+        foldPitching(charPit.get(key)!, player.pitching);
       }
     }
 
@@ -197,22 +223,29 @@ export function buildSeasonSnapshot(
     };
   });
 
-  const characters: CharAgg[] = [...seenChars]
-    .sort((a, b) => a - b)
-    .filter((c) => charBat.get(c)!.gp !== 0 || charPit.get(c)!.gp !== 0)
-    .map((c) => ({
-      charId: c,
-      name: charName(c),
-      team: charTeam.get(c) ?? null,
-      portrait: `portraits/${c}.png`,
-      batting: battingRates(charBat.get(c)!),
-      pitching: pitchingRates(charPit.get(c)!),
-    }));
+  // By character id, then by key, so a season with duplicates lists each team's copy of
+  // a character together and in a stable order. With one line per charId the second key
+  // never comes into play and the order is build.py's.
+  const characters: CharAgg[] = [...charMeta.keys()]
+    .sort((a, b) => charMeta.get(a)!.charId - charMeta.get(b)!.charId || (a < b ? -1 : a > b ? 1 : 0))
+    .filter((k) => charBat.get(k)!.gp !== 0 || charPit.get(k)!.gp !== 0)
+    .map((k) => {
+      const { charId, team } = charMeta.get(k)!;
+      return {
+        key: k,
+        charId,
+        name: charName(charId),
+        team,
+        portrait: `portraits/${charId}.png`,
+        batting: battingRates(charBat.get(k)!),
+        pitching: pitchingRates(charPit.get(k)!),
+      };
+    });
 
   const top = (
     key: (c: CharAgg) => number,
     o: { minAb?: number; minIp?: number; ascending?: boolean } = {},
-  ): number[] => {
+  ): string[] => {
     let pool = characters;
     if (o.minAb !== undefined) pool = pool.filter((c) => c.batting.ab >= o.minAb!);
     if (o.minIp !== undefined) pool = pool.filter((c) => c.pitching.ip >= o.minIp!);
@@ -220,7 +253,7 @@ export function buildSeasonSnapshot(
     return [...pool]
       .sort((a, b) => dir * (key(a) - key(b)))
       .slice(0, 10)
-      .map((c) => c.charId);
+      .map((c) => c.key);
   };
 
   const leaders = {

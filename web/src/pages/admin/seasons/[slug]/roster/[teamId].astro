@@ -6,17 +6,25 @@ import { portrait } from '../../../../../lib/format.ts';
 import { CHARACTERS } from '../../../../../lib/mssb/reference.ts';
 
 // The draft board. Every other admin screen is a table of inputs; this one is a
-// stateful multi-select with cross-team exclusivity, so it gets a purpose-built grid
-// rather than a list of checkboxes. No drag and drop: 54 clickable cells is simpler to
-// build, simpler to use on a phone, and works without JavaScript.
+// stateful multi-select whose cells depend on what every other team has picked, so it
+// gets a purpose-built grid rather than a list of checkboxes. No drag and drop: 54
+// clickable cells is simpler to build, simpler to use on a phone, and works without
+// JavaScript.
+//
+// Whether another team's pick locks a cell or merely annotates it is the season's
+// allow_duplicate_chars flag.
 const { db } = Astro.locals;
 const slug = Astro.params.slug!;
 const teamId = Number(Astro.params.teamId);
 
-const seasonRows = await db.all(`SELECT id, slug, short_label FROM seasons WHERE slug = ?`, [slug]);
+const seasonRows = await db.all(
+  `SELECT id, slug, short_label, allow_duplicate_chars FROM seasons WHERE slug = ?`,
+  [slug],
+);
 const season = seasonRows[0];
 if (!season) return Astro.rewrite('/404');
 const seasonId = Number(season.id);
+const allowDuplicates = Boolean(Number(season.allow_duplicate_chars));
 
 const teamRows = await db.all(
   `SELECT id, name, color, captain_char_id, updated_at FROM teams WHERE id = ? AND season_id = ?`,
@@ -26,17 +34,27 @@ const team = teamRows[0];
 if (!team) return Astro.rewrite('/404');
 
 const owners = await rosterOwnership(db, seasonId);
-const ownerByChar = new Map(owners.map((o) => [o.charId, o]));
+// A character can have several owners once the season allows duplicates, so this groups
+// rather than overwrites — a Map keyed by charId silently kept only the last team.
+const ownersByChar = new Map<number, typeof owners>();
+for (const o of owners) {
+  const list = ownersByChar.get(o.charId);
+  if (list) list.push(o);
+  else ownersByChar.set(o.charId, [o]);
+}
 const mine = new Set(owners.filter((o) => o.teamId === teamId).map((o) => o.charId));
 const captain = team.captain_char_id === null ? null : Number(team.captain_char_id);
 
 const cells = CHARACTERS.map((name, charId) => {
-  const owner = ownerByChar.get(charId);
+  const others = (ownersByChar.get(charId) ?? []).filter((o) => o.teamId !== teamId);
   return {
     charId,
     name,
     mine: mine.has(charId),
-    takenBy: owner && owner.teamId !== teamId ? owner : null,
+    others,
+    // Only an exclusive season locks a cell. With duplicates the other teams holding
+    // this character are a note, not a barrier.
+    takenBy: !allowDuplicates && others.length ? others[0] : null,
   };
 });
 const available = cells.filter((c) => !c.takenBy).length;
@@ -56,7 +74,11 @@ const available = cells.filter((c) => !c.takenBy).length;
 
     <div class="bar card">
       <span class="count"><strong id="count">{mine.size}</strong> of 9 picked</span>
-      <span class="muted">{available} characters still available this season</span>
+      <span class="muted">
+        {allowDuplicates
+          ? 'All 54 available — this season lets teams share characters'
+          : `${available} characters still available this season`}
+      </span>
       <label class="capwrap">
         <span class="lbl">Captain</span>
         <select name="captain" id="captain">
@@ -72,9 +94,15 @@ const available = cells.filter((c) => !c.takenBy).length;
     <div class="grid-chars">
       {cells.map((c) => (
         <label
-          class={`cell ${c.mine ? 'picked' : ''} ${c.takenBy ? 'taken' : ''}`}
-          style={c.takenBy ? `--owner:${c.takenBy.color}` : undefined}
-          title={c.takenBy ? `Already drafted by ${c.takenBy.teamName}` : c.name}
+          class={`cell ${c.mine ? 'picked' : ''} ${c.takenBy ? 'taken' : ''} ${!c.takenBy && c.others.length ? 'shared' : ''}`}
+          style={c.others.length ? `--owner:${c.others[0].color}` : undefined}
+          title={
+            c.takenBy
+              ? `Already drafted by ${c.takenBy.teamName}`
+              : c.others.length
+                ? `${c.name} — also on ${c.others.map((o) => o.teamName).join(', ')}`
+                : c.name
+          }
         >
           <input
             type="checkbox"
@@ -86,7 +114,11 @@ const available = cells.filter((c) => !c.takenBy).length;
           />
           <img src={portrait(c.charId)} alt="" width={44} height={44} loading="lazy" />
           <span class="cname">{c.name}</span>
-          {c.takenBy && <span class="owner">{c.takenBy.teamName}</span>}
+          {c.others.length > 0 && (
+            <span class="owner">
+              {c.takenBy ? c.takenBy.teamName : `also ${c.others.map((o) => o.teamName).join(', ')}`}
+            </span>
+          )}
         </label>
       ))}
     </div>
@@ -111,6 +143,10 @@ const available = cells.filter((c) => !c.takenBy).length;
   .cell.picked { border-color: var(--grass); background: #f1fbee; box-shadow: var(--shadow-sm); }
   .cell.taken { opacity: .5; cursor: not-allowed; border-style: dashed; border-color: var(--owner, var(--line)); }
   .cell.taken:hover { border-color: var(--owner, var(--line)); }
+  /* Drafted elsewhere but still pickable: dashed to say "someone has this", full opacity
+     to say "you can too". */
+  .cell.shared { border-style: dashed; }
+  .cell.shared.picked { border-style: solid; }
   .cname { font-size: .74rem; font-weight: 700; line-height: 1.1; }
   .owner { font-size: .62rem; color: var(--ink-soft); }
   img { border-radius: 8px; }

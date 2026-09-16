@@ -92,7 +92,11 @@ export async function buildSeasonContext(
   seasonId: number,
 ): Promise<SeasonContext> {
   const [seasonRows, teamRows, rosterRows, matchupRows, playedRows] = await Promise.all([
-    db.all(`SELECT slug, name, short_label, start_date, rounds FROM seasons WHERE id = ?`, [seasonId]),
+    db.all(
+      `SELECT slug, name, short_label, start_date, rounds, allow_duplicate_chars
+       FROM seasons WHERE id = ?`,
+      [seasonId],
+    ),
     db.all(`SELECT id, slug, name, stadium_id FROM teams WHERE season_id = ? ORDER BY sort_order, id`, [seasonId]),
     db.all(`SELECT team_id, char_id FROM roster_slots WHERE season_id = ?`, [seasonId]),
     db.all(
@@ -123,6 +127,7 @@ export async function buildSeasonContext(
       shortLabel: String(season.short_label),
       startDate: String(season.start_date),
       rounds: Number(season.rounds),
+      allowDuplicateChars: Boolean(Number(season.allow_duplicate_chars)),
     },
     teams: teamRows.map((t) => ({
       teamId: Number(t.id),

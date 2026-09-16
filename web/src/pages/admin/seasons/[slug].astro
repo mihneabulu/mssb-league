@@ -29,6 +29,20 @@ for (const r of roster) {
   rosterByTeam.set(t, [...(rosterByTeam.get(t) ?? []), Number(r.char_id)]);
 }
 
+const allowDuplicates = Boolean(Number(season.allow_duplicate_chars));
+
+// Named so the checkbox can say what turning it off would cost, and so the draft board
+// is not the only place a shared pick is visible.
+const charCounts = new Map<number, number>();
+for (const r of roster) {
+  const c = Number(r.char_id);
+  charCounts.set(c, (charCounts.get(c) ?? 0) + 1);
+}
+const duplicated = [...charCounts.entries()]
+  .filter(([, n]) => n > 1)
+  .map(([c]) => CHARACTERS[c])
+  .sort();
+
 const roundCount = Number(rounds[0]?.n ?? 0);
 const gameCount = Number(games[0]?.n ?? 0);
 const undrafted = teams.filter((t) => Number(t.drafted) !== 9);
@@ -72,6 +86,17 @@ const steps = [
         </select>
       </label>
     </div>
+    <label class="check">
+      <input type="checkbox" name="allowDuplicateChars" checked={allowDuplicates} />
+      <span>
+        <strong>Let teams draft the same character</strong>
+        <span class="muted">
+          Off, a character belongs to one team all season. On, any team can pick anyone, and
+          each team gets its own stat line for them — two Marios, two sets of numbers.
+          {duplicated.length > 0 && ` Currently shared: ${duplicated.join(', ')}.`}
+        </span>
+      </span>
+    </label>
     <div class="row">
       <button class="btn" type="submit">Save details</button>
       {Number(season.is_current) !== 1 && (
@@ -170,6 +195,10 @@ const steps = [
   .narrow { width: 120px; }
   .teams td, .teams th { padding: .4rem .45rem; }
   .teams td:first-child, .teams th:first-child { padding-left: 1rem; }
+  .check { display: flex; gap: .6rem; align-items: flex-start; margin: .2rem 0 .1rem; max-width: 62ch; }
+  .check input { margin-top: .2rem; }
+  .check span { display: block; }
+  .check .muted { font-size: .82rem; font-weight: 400; }
   .ok { color: var(--grass); font-weight: 700; text-decoration: none; }
   .todo { color: var(--dirt); font-weight: 700; text-decoration: none; }
 </style>

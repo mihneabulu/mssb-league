@@ -169,7 +169,11 @@ function analyze(raw: RioGame, filename: string, ctx: SeasonContext): AnalyzedGa
   if (wasDecoded) {
     warnings.push({
       kind: 'decoded',
-      message: 'Decoded export — converted back to the raw numeric format.',
+      message: ctx.season.allowDuplicateChars
+        ? 'Decoded export — converted back to the raw numeric format. This season allows ' +
+          'the same character on several teams, and a decoded file names characters ' +
+          'instead of numbering them, so check both sides are the right teams.'
+        : 'Decoded export — converted back to the raw numeric format.',
     });
 
     const awaySide = resolveDecodedSide(
@@ -272,11 +276,16 @@ function analyze(raw: RioGame, filename: string, ctx: SeasonContext): AnalyzedGa
   // most likely cause is a substitute — and the substitute is silently replaced by the
   // drafted player, producing an exact-looking roster match. ingest.py printed a note
   // and moved on; here it forces a human to look.
-  const blocking = warnings.some((w) =>
-    ['unknown-team', 'team-collision', 'ambiguous-roster', 'no-round', 'elimination'].includes(
-      w.kind,
-    ),
-  );
+  const kinds = ['unknown-team', 'team-collision', 'ambiguous-roster', 'no-round', 'elimination'];
+
+  // Identification is overlap against the drafted nine, and a season that allows
+  // duplicates deliberately makes rosters overlap: 8/9 might be a substitute, or might
+  // be the other team that drafted nearly the same players. Only an exact set is
+  // trusted, and a decoded export — which resolves names against a single team's roster
+  // and so cannot tell those two apart at all — is never trusted on its own.
+  if (ctx.season.allowDuplicateChars) kinds.push('fuzzy-roster', 'decoded');
+
+  const blocking = warnings.some((w) => kinds.includes(w.kind));
   const duplicate = warnings.some((w) => w.kind === 'duplicate');
 
   return {

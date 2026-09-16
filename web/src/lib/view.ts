@@ -13,7 +13,38 @@ export type ScheduledRound = { round: number; matchups: ScheduledMatchup[] };
 
 export type View = ReturnType<typeof makeView>;
 
-export function makeView(snapshot: SeasonSnapshot) {
+/**
+ * Bring a stored snapshot up to the current shape.
+ *
+ * A deploy does not rebuild snapshots — they are rebuilt on the next write — so for a
+ * while after this ships every season is still being served from a payload written
+ * before characters had a `key` and before leaderboards held keys instead of character
+ * ids. Both are the same thing in a season without duplicates, so the upgrade is exact,
+ * and it disappears the moment the season is next edited.
+ */
+function upgrade(snapshot: SeasonSnapshot): SeasonSnapshot {
+  const stale =
+    snapshot.season.allowDuplicateChars === undefined ||
+    snapshot.characters.some((c) => c.key === undefined) ||
+    Object.values(snapshot.leaders.batting).some((ids) => ids.some((v) => typeof v !== 'string'));
+  if (!stale) return snapshot;
+
+  const keys = (board: Record<string, string[]>): Record<string, string[]> =>
+    Object.fromEntries(Object.entries(board).map(([k, ids]) => [k, ids.map(String)]));
+
+  return {
+    ...snapshot,
+    season: { ...snapshot.season, allowDuplicateChars: snapshot.season.allowDuplicateChars ?? false },
+    characters: snapshot.characters.map((c) => ({ ...c, key: c.key ?? String(c.charId) })),
+    leaders: {
+      batting: keys(snapshot.leaders.batting),
+      pitching: keys(snapshot.leaders.pitching),
+    },
+  };
+}
+
+export function makeView(stored: SeasonSnapshot) {
+  const snapshot = upgrade(stored);
   const byName = new Map(snapshot.teams.map((t) => [t.name, t]));
   const bySlug = new Map(snapshot.teams.map((t) => [t.slug, t]));
   const byGameId = new Map(snapshot.games.map((g) => [g.gameId, g]));
@@ -76,6 +107,12 @@ export function makeView(snapshot: SeasonSnapshot) {
     teamGames: (name: string): Game[] =>
       snapshot.games.filter((g) => g.away === name || g.home === name),
     teamCharacters: (t: Team): CharAgg[] => {
+      // With duplicates allowed every stat line already belongs to exactly one team,
+      // including a substitute's, so the team itself is the filter. Without them a line
+      // is per character and the roster is what says whose it is.
+      if (snapshot.season.allowDuplicateChars) {
+        return snapshot.characters.filter((c) => c.team === t.name);
+      }
       const ids = new Set(t.roster.map((m) => m.charId));
       return snapshot.characters.filter((c) => ids.has(c.charId));
     },

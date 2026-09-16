@@ -53,6 +53,8 @@ export function legacyContext(): () => SeasonContext {
       shortLabel: 'Season 1 · 2026',
       startDate: legacy.season.startDate,
       rounds: legacy.season.rounds,
+      // Season 1 drafted from an exclusive pool: 54 characters, six teams, no repeats.
+      allowDuplicateChars: false,
     },
     teams: legacy.teams.map((t, i) => ({
       teamId: i,

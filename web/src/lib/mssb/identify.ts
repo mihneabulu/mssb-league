@@ -1,6 +1,11 @@
 // Which team is this? Every Project Rio game logs both managers as the same account,
 // so a side is identified by its drafted roster: the exact set of 9 character ids.
 //
+// A season that allows duplicates makes rosters overlap on purpose, which weakens this
+// considerably — two teams can share eight of nine characters. The matching itself is
+// unchanged; what changes is how much the upload review trusts a non-exact result (see
+// ingest.ts).
+//
 // Ported from ingest.py's identify(), with three deliberate changes for the browser
 // flow. The CLI could get away with a confident wrong guess because a human was reading
 // stdout and could re-run; a web upload needs the parser to be able to say "I don't
@@ -64,7 +69,7 @@ export function identifySide(charIds: number[], index: RosterIndex): SideMatch {
 
   let best: IndexedTeam | null = null;
   let bestOverlap = -1;
-  let tied = false;
+  let atBest = 0;
 
   for (const team of index.teams) {
     let overlap = 0;
@@ -73,11 +78,16 @@ export function identifySide(charIds: number[], index: RosterIndex): SideMatch {
     if (overlap > bestOverlap) {
       best = team;
       bestOverlap = overlap;
-      tied = false;
+      atBest = 1;
     } else if (overlap === bestOverlap) {
-      tied = true;
+      atBest++;
     }
   }
+
+  // Counted rather than flagged: when a season allows duplicates two teams can match the
+  // same nine ids equally well — even perfectly, if they drafted the same roster — and a
+  // boolean that excused itself for exact matches would have picked one at random.
+  const tied = atBest > 1;
 
   if (!best || bestOverlap < MIN_OVERLAP) return noMatch(Math.max(bestOverlap, 0), tied);
 
@@ -91,7 +101,7 @@ export function identifySide(charIds: number[], index: RosterIndex): SideMatch {
     name: best.name,
     exact,
     overlap: bestOverlap,
-    ambiguous: tied && !exact,
+    ambiguous: tied,
   };
 }
 

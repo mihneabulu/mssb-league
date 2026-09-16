@@ -10,7 +10,7 @@
 // and no local state — meaning this runs in CI like any other test.
 
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -19,8 +19,27 @@ import type { Queryable, Row } from '../src/lib/db/queries.ts';
 import { loadSeasonInput } from '../src/lib/db/queries.ts';
 import type { SeasonInput } from '../src/lib/mssb/types.ts';
 import { diff, formatDiffs } from './diff.ts';
+import { asCharIds, stripKeys } from './golden.ts';
 import { REPO_ROOT } from './legacy-context.ts';
 import { loadLegacySeason } from './legacy.ts';
+
+const MIGRATIONS = join(REPO_ROOT, 'web/migrations');
+
+/**
+ * A database with every migration applied and Season 1 seeded.
+ *
+ * Every migration, in order, rather than just the first: the point of this file is that
+ * the schema the Worker actually runs against still produces build.py's numbers, and a
+ * test pinned to 0001 would have gone on passing while migration 0002 broke production.
+ */
+function seededDatabase(): DatabaseSync {
+  const db = new DatabaseSync(':memory:');
+  for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort()) {
+    db.exec(readFileSync(join(MIGRATIONS, file), 'utf8'));
+  }
+  db.exec(readFileSync(join(MIGRATIONS, 'seed/season-1.sql'), 'utf8'));
+  return db;
+}
 
 const golden = JSON.parse(
   readFileSync(join(REPO_ROOT, 'web/test/fixtures/season-1.golden.json'), 'utf8'),
@@ -29,9 +48,7 @@ const golden = JSON.parse(
 let loaded: SeasonInput;
 
 beforeAll(async () => {
-  const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(join(REPO_ROOT, 'web/migrations/0001_init.sql'), 'utf8'));
-  db.exec(readFileSync(join(REPO_ROOT, 'web/migrations/seed/season-1.sql'), 'utf8'));
+  const db = seededDatabase();
 
   const queryable: Queryable = {
     async all(sql, params = []) {
@@ -47,6 +64,8 @@ beforeAll(async () => {
 describe('Season 1 survives a round trip through SQLite', () => {
   it('loads the season, teams and games back out', () => {
     expect(loaded.season.slug).toBe('s1');
+    // The draft was exclusive, and migration 0002 must not have quietly changed that.
+    expect(loaded.season.allowDuplicateChars).toBe(false);
     expect(loaded.teams).toHaveLength(6);
     expect(loaded.games).toHaveLength(14);
     expect(loaded.schedule).toHaveLength(10);
@@ -91,10 +110,10 @@ describe('Season 1 survives a round trip through SQLite', () => {
     const teamDiffs = diff(golden.teams, snapshot.teams, 'teams');
     expect(teamDiffs, formatDiffs(teamDiffs)).toEqual([]);
 
-    const charDiffs = diff(golden.characters, snapshot.characters, 'characters');
+    const charDiffs = diff(golden.characters, stripKeys(snapshot.characters), 'characters');
     expect(charDiffs, formatDiffs(charDiffs)).toEqual([]);
 
-    const leaderDiffs = diff(golden.leaders, snapshot.leaders, 'leaders');
+    const leaderDiffs = diff(golden.leaders, asCharIds(snapshot.leaders), 'leaders');
     expect(leaderDiffs, formatDiffs(leaderDiffs)).toEqual([]);
 
     const expectedGames = golden.games.map((g: Record<string, unknown>) => {
@@ -112,10 +131,7 @@ describe('Season 1 survives a round trip through SQLite', () => {
   });
 
   it('keeps the raw uploads, gzipped and checksummed', () => {
-    const db = new DatabaseSync(':memory:');
-    db.exec(readFileSync(join(REPO_ROOT, 'web/migrations/0001_init.sql'), 'utf8'));
-    db.exec(readFileSync(join(REPO_ROOT, 'web/migrations/seed/season-1.sql'), 'utf8'));
-
+    const db = seededDatabase();
     const rows = db
       .prepare('SELECT rio_game_id, sha256, size_raw, size_gz, bytes_gz FROM game_raw')
       .all() as unknown as Row[];
