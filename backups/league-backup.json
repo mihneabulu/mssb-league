@@ -12165,7 +12165,7 @@
           "color": "#76bb40",
           "captainCharId": 43,
           "captainPortrait": "portraits/43.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Bowser Castle",
           "roster": [
             {
               "charId": 2,
@@ -12229,7 +12229,7 @@
           "color": "#563d00",
           "captainCharId": 9,
           "captainPortrait": "portraits/9.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Wario Palace",
           "roster": [
             {
               "charId": 0,
@@ -12281,7 +12281,7 @@
           "color": "#d38301",
           "captainCharId": 3,
           "captainPortrait": "portraits/3.png",
-          "stadium": "Mario Stadium",
+          "stadium": "DK Jungle",
           "roster": [
             {
               "charId": 3,
@@ -12345,7 +12345,7 @@
           "color": "#e22400",
           "captainCharId": 0,
           "captainPortrait": "portraits/0.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Peach Garden",
           "roster": [
             {
               "charId": 0,
@@ -12409,7 +12409,7 @@
           "color": "#7a219e",
           "captainCharId": 11,
           "captainPortrait": "portraits/11.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Wario Palace",
           "roster": [
             {
               "charId": 1,
@@ -12531,7 +12531,7 @@
           "color": "#e292fe",
           "captainCharId": 17,
           "captainPortrait": "portraits/17.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Peach Garden",
           "roster": [
             {
               "charId": 1,
@@ -12595,7 +12595,7 @@
           "color": "#01c7fc",
           "captainCharId": 6,
           "captainPortrait": "portraits/6.png",
-          "stadium": "Mario Stadium",
+          "stadium": "Yoshi Park",
           "roster": [
             {
               "charId": 3,
