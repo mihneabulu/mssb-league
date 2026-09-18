@@ -168,6 +168,30 @@
       "wasDecoded": false,
       "uploadedAt": 1788998400,
       "uploadedBy": "import-legacy"
+    },
+    {
+      "id": 15,
+      "season": "s2",
+      "rioGameId": "137307583",
+      "sha256": "b34447f647c08a619efd0057e9d07b71e1892a774e562105b1a50ad6cab26244",
+      "filename": "20260916T214702_Coqueza-Vs-coolinilliams_137307583.json",
+      "sizeRaw": 337781,
+      "sizeGz": 21804,
+      "wasDecoded": false,
+      "uploadedAt": 1789656105,
+      "uploadedBy": "rd3mail@gmail.com"
+    },
+    {
+      "id": 16,
+      "season": "s2",
+      "rioGameId": "158684074",
+      "sha256": "2e5a47fac0f2c209c6045a00163655d7334508bda26c41d3c195d9f3e11dca54",
+      "filename": "20260917T212409_coolinilliams-Vs-Coqueza_158684074.json",
+      "sizeRaw": 323496,
+      "sizeGz": 20745,
+      "wasDecoded": false,
+      "uploadedAt": 1789698475,
+      "uploadedBy": "rd3mail@gmail.com"
     }
   ]
 }
